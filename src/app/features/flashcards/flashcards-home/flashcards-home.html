@@ -65,7 +65,11 @@
           </div>
           <p>Priorita {{ cardPriority(card) }}</p>
           <h2>{{ card.question }}</h2>
-          <button class="ghost-button" type="button" (click)="flipCard($event)">
+          <button
+            class="ghost-button"
+            type="button"
+            (pointerdown)="$event.stopPropagation()"
+            (click)="flipCard($event)">
             <i class="pi pi-eye" aria-hidden="true"></i>
             Mostra risposta
           </button>
@@ -78,7 +82,11 @@
             <span>{{ card.unknown_count }} no</span>
           </div>
           <p>{{ card.answer }}</p>
-          <button class="ghost-button" type="button" (click)="flipCard($event)">
+          <button
+            class="ghost-button"
+            type="button"
+            (pointerdown)="$event.stopPropagation()"
+            (click)="flipCard($event)">
             <i class="pi pi-undo" aria-hidden="true"></i>
             Torna alla domanda
           </button>

@@ -135,6 +135,10 @@ export class FlashcardsHome {
       return;
     }
 
+    if ((event.target as HTMLElement).closest('button')) {
+      return;
+    }
+
     (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
     this.isDragging.set(true);
     this.dragStartX.set(event.clientX);

@@ -118,6 +118,7 @@
   display: grid;
   min-height: 49dvh;
   place-items: center;
+  perspective: 1200px;
 }
 
 .study-card {
@@ -126,6 +127,7 @@
   position: relative;
   touch-action: pan-y;
   transition: transform 160ms ease;
+  transform-style: preserve-3d;
   user-select: none;
   width: 100%;
 }

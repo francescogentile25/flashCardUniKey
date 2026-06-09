@@ -21,7 +21,7 @@ export class FlashcardsService {
   });
 
   getAll(): Observable<Flashcard[]> {
-    return this.http.get<Flashcard[]>(`${this.baseUrl}?select=*&order=next_review_at.asc.nullsfirst`, {
+    return this.http.get<Flashcard[]>(`${this.baseUrl}?select=*&order=created_at.asc`, {
       headers: this.headers
     });
   }
