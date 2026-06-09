@@ -220,10 +220,9 @@ export class FlashcardsHome {
 
   private rebuildQueue(): void {
     const cards = this.cards();
+    const todayCards = cards.filter((card) => this.isDueToday(card) || card.mastery_level === 'new');
     const queueByMode: Record<StudyMode, Flashcard[]> = {
-      today: this.sortByPriority(
-        cards.filter((card) => this.isDueToday(card) || card.mastery_level === 'new')
-      ),
+      today: this.sortByPriority(todayCards.length > 0 ? todayCards : cards),
       review: this.sortByPriority(cards.filter((card) => this.isWeak(card))),
       simulation: this.shuffle(cards)
     };

@@ -47,6 +47,13 @@ create policy flashcards_update_public
   using (true)
   with check (true);
 
+drop policy if exists flashcards_delete_public on public.flashcards;
+create policy flashcards_delete_public
+  on public.flashcards
+  for delete
+  to anon, authenticated
+  using (true);
+
 insert into public.flashcards (question, answer, area, level)
 values
   (

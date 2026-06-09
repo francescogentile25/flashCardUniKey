@@ -7,7 +7,7 @@
   display: grid;
   gap: 1rem;
   margin: 0 auto;
-  max-width: 720px;
+  max-width: 780px;
   min-height: 100dvh;
   padding: 1.15rem 1rem 1.4rem;
 }
@@ -20,7 +20,9 @@
 }
 
 header p,
-header h1 {
+header h1,
+.library-card h2,
+.library-card p {
   margin: 0;
 }
 
@@ -38,18 +40,36 @@ header h1 {
 
 form,
 .control,
-label {
+label,
+.library,
+.card-list {
   display: grid;
   gap: 0.65rem;
 }
 
-form {
+form,
+.library-card,
+.library-state {
   background: #171d25;
   border: 1px solid rgba(255, 255, 255, 0.09);
   border-radius: 8px;
+}
+
+form {
   padding: 1rem;
 }
 
+.form-title,
+.library-title,
+.row-actions {
+  align-items: center;
+  display: flex;
+  gap: 0.6rem;
+  justify-content: space-between;
+}
+
+.form-title strong,
+.library-title span,
 label span,
 .control > span {
   color: #f7f2e8;
@@ -77,7 +97,8 @@ small,
   color: #fecaca;
 }
 
-.feedback {
+.feedback,
+.library-state {
   border-radius: 8px;
   padding: 0.8rem;
 }
@@ -99,13 +120,20 @@ small,
   padding: 0.25rem;
 }
 
+button {
+  cursor: pointer;
+}
+
 .segmented button,
-.submit {
+.submit,
+.row-actions button,
+.link-button,
+.icon-button {
   border: 0;
   border-radius: 8px;
   font-weight: 900;
-  min-height: 48px;
-  padding: 0.85rem;
+  min-height: 44px;
+  padding: 0.75rem;
 }
 
 .segmented button {
@@ -113,22 +141,86 @@ small,
   color: #aeb7c6;
 }
 
-.segmented button.active {
+.segmented button.active,
+.submit {
   background: #f8d65b;
   color: #14171f;
 }
 
-.submit {
-  background: #d9fff6;
-  color: #06241f;
+.submit:disabled,
+.row-actions button:disabled {
+  opacity: 0.55;
 }
 
-.submit:disabled {
-  opacity: 0.55;
+.link-button,
+.icon-button {
+  background: #0e1217;
+  color: #f8d65b;
+}
+
+.library-card {
+  display: grid;
+  gap: 0.9rem;
+  padding: 0.9rem;
+}
+
+.library-card.editing {
+  border-color: #f8d65b;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.42rem;
+  margin-bottom: 0.65rem;
+}
+
+.chips span {
+  background: rgba(248, 214, 91, 0.12);
+  border-radius: 999px;
+  color: #f8d65b;
+  font-size: 0.75rem;
+  font-weight: 900;
+  padding: 0.34rem 0.58rem;
+  text-transform: uppercase;
+}
+
+.library-card h2 {
+  font-size: 1rem;
+  line-height: 1.25;
+}
+
+.library-card p,
+.library-state {
+  color: #aeb7c6;
+  line-height: 1.45;
+}
+
+.row-actions {
+  justify-content: stretch;
+}
+
+.row-actions button {
+  align-items: center;
+  background: #d9fff6;
+  color: #06241f;
+  display: inline-flex;
+  flex: 1;
+  gap: 0.45rem;
+  justify-content: center;
+}
+
+.row-actions .danger {
+  background: #fecaca;
+  color: #7f1d1d;
 }
 
 @media (min-width: 760px) {
   .create-shell {
     padding: 2rem 1.5rem 2.6rem;
+  }
+
+  .card-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }

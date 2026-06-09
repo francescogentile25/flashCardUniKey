@@ -6,11 +6,11 @@
 
   <header>
     <p>Card studio</p>
-    <h1>Crea una nuova domanda.</h1>
+    <h1>Gestisci le flash card.</h1>
   </header>
 
-  @if (saved()) {
-    <div class="feedback success">Card salvata. Puoi inserirne un'altra.</div>
+  @if (savedMessage()) {
+    <div class="feedback success">{{ savedMessage() }}</div>
   }
 
   @if (error()) {
@@ -18,6 +18,13 @@
   }
 
   <form (submit)="onSubmit($event)">
+    <div class="form-title">
+      <strong>{{ isEditing() ? 'Modifica card' : 'Nuova card' }}</strong>
+      @if (isEditing()) {
+        <button type="button" class="link-button" (click)="resetForm()">Annulla</button>
+      }
+    </div>
+
     <label>
       <span>Domanda</span>
       <textarea rows="5" [formField]="cardForm.question"></textarea>
@@ -69,9 +76,56 @@
     <button class="submit" type="submit" [disabled]="!cardForm().valid() || saving()">
       @if (saving()) {
         Salvataggio...
+      } @else if (isEditing()) {
+        Aggiorna card
       } @else {
         Salva card
       }
     </button>
   </form>
+
+  <section class="library" aria-label="Elenco flash card">
+    <div class="library-title">
+      <span>Archivio</span>
+      <button type="button" class="icon-button" title="Ricarica" (click)="loadCards()">
+        <i class="pi pi-refresh" aria-hidden="true"></i>
+      </button>
+    </div>
+
+    @if (loading()) {
+      <div class="library-state">Caricamento card...</div>
+    } @else if (cards().length === 0) {
+      <div class="library-state">Ancora nessuna flash card.</div>
+    } @else {
+      <div class="card-list">
+        @for (card of cards(); track card.id) {
+          <article class="library-card" [class.editing]="editingId() === card.id">
+            <div>
+              <div class="chips">
+                <span>{{ card.area === 'frontend' ? 'FE' : 'BE' }}</span>
+                <span>{{ card.level }}</span>
+              </div>
+              <h2>{{ card.question }}</h2>
+              <p>{{ card.answer }}</p>
+            </div>
+
+            <div class="row-actions">
+              <button type="button" (click)="editCard(card)">
+                <i class="pi pi-pencil" aria-hidden="true"></i>
+                Modifica
+              </button>
+              <button
+                type="button"
+                class="danger"
+                [disabled]="deletingId() === card.id"
+                (click)="deleteCard(card)">
+                <i class="pi pi-trash" aria-hidden="true"></i>
+                Elimina
+              </button>
+            </div>
+          </article>
+        }
+      </div>
+    }
+  </section>
 </section>

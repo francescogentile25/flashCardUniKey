@@ -32,8 +32,20 @@ export class FlashcardsService {
     });
   }
 
+  updateDetails(id: string, request: CreateFlashcardRequest): Observable<Flashcard[]> {
+    return this.http.patch<Flashcard[]>(`${this.baseUrl}?id=eq.${id}`, request, {
+      headers: this.headers
+    });
+  }
+
   updateReview(id: string, request: UpdateFlashcardReviewRequest): Observable<Flashcard[]> {
     return this.http.patch<Flashcard[]>(`${this.baseUrl}?id=eq.${id}`, request, {
+      headers: this.headers
+    });
+  }
+
+  delete(id: string): Observable<Flashcard[]> {
+    return this.http.delete<Flashcard[]>(`${this.baseUrl}?id=eq.${id}`, {
       headers: this.headers
     });
   }
