@@ -6,8 +6,22 @@ create table if not exists public.flashcards (
   answer text not null,
   area text not null check (area in ('frontend', 'backend')),
   level text not null check (level in ('junior', 'middle')),
+  known_count integer not null default 0,
+  unknown_count integer not null default 0,
+  last_seen_at timestamptz,
+  next_review_at timestamptz not null default now(),
+  mastery_level text not null default 'new' check (
+    mastery_level in ('new', 'weak', 'review', 'almost', 'mastered')
+  ),
   created_at timestamptz not null default now()
 );
+
+alter table public.flashcards
+  add column if not exists known_count integer not null default 0,
+  add column if not exists unknown_count integer not null default 0,
+  add column if not exists last_seen_at timestamptz,
+  add column if not exists next_review_at timestamptz not null default now(),
+  add column if not exists mastery_level text not null default 'new';
 
 alter table public.flashcards enable row level security;
 
@@ -23,6 +37,14 @@ create policy flashcards_insert_public
   on public.flashcards
   for insert
   to anon, authenticated
+  with check (true);
+
+drop policy if exists flashcards_update_public on public.flashcards;
+create policy flashcards_update_public
+  on public.flashcards
+  for update
+  to anon, authenticated
+  using (true)
   with check (true);
 
 insert into public.flashcards (question, answer, area, level)

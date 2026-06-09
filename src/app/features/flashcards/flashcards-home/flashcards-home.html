@@ -1,7 +1,7 @@
 <section class="trainer-shell">
   <header class="hero">
-    <p>Interview deck</p>
-    <h1>Swipe drill per domande FE e BE.</h1>
+    <p>Sprint 5 giorni</p>
+    <h1>Studia dove perdi punti.</h1>
   </header>
 
   @if (error()) {
@@ -11,11 +11,28 @@
     </div>
   }
 
-  <section class="score-strip" aria-label="Statistiche sessione">
-    <span><strong>{{ knownCount() }}</strong> So</span>
-    <span><strong>{{ remainingCount() }}</strong> Deck</span>
-    <span><strong>{{ unknownCount() }}</strong> Ripasso</span>
+  <section class="mode-tabs" aria-label="Modalita studio">
+    @for (mode of modes; track mode.id) {
+      <button
+        type="button"
+        [class.active]="activeMode() === mode.id"
+        (click)="setMode(mode.id)">
+        <strong>{{ mode.label }}</strong>
+        <span>{{ mode.caption }}</span>
+      </button>
+    }
   </section>
+
+  <section class="score-strip" aria-label="Statistiche sprint">
+    <span><strong>{{ todayCount() }}</strong> Oggi</span>
+    <span><strong>{{ weakCount() }}</strong> Deboli</span>
+    <span><strong>{{ masteredCount() }}</strong> Dominio</span>
+  </section>
+
+  <div class="session-line">
+    <span>{{ activeModeConfig().label }}: {{ remainingCount() }} card</span>
+    <span>{{ progress() }}%</span>
+  </div>
 
   <div class="progress-track" aria-label="Avanzamento">
     <span [style.width.%]="progress()"></span>
@@ -44,8 +61,9 @@
           <div class="chips">
             <span>{{ card.area === 'frontend' ? 'Frontend' : 'Backend' }}</span>
             <span>{{ card.level }}</span>
+            <span>{{ masteryLabel(card) }}</span>
           </div>
-          <p>Domanda</p>
+          <p>Priorita {{ cardPriority(card) }}</p>
           <h2>{{ card.question }}</h2>
           <button class="ghost-button" type="button" (click)="flipCard($event)">
             <i class="pi pi-eye" aria-hidden="true"></i>
@@ -56,7 +74,8 @@
         <div class="face back">
           <div class="chips">
             <span>Risposta</span>
-            <span>{{ card.level }}</span>
+            <span>{{ card.known_count }} so</span>
+            <span>{{ card.unknown_count }} no</span>
           </div>
           <p>{{ card.answer }}</p>
           <button class="ghost-button" type="button" (click)="flipCard($event)">
@@ -69,24 +88,25 @@
 
     <div class="swipe-hint">
       <span><i class="pi pi-arrow-left" aria-hidden="true"></i> La so</span>
-      <span>Trascina o usa i pulsanti</span>
+      <span>Le sbagliate tornano presto</span>
       <span>Non la so <i class="pi pi-arrow-right" aria-hidden="true"></i></span>
     </div>
 
     <div class="action-bar">
-      <button class="answer known" type="button" (click)="markKnown()">
+      <button class="answer known" type="button" [disabled]="savingReview()" (click)="markKnown()">
         <i class="pi pi-check" aria-hidden="true"></i>
         La so
       </button>
-      <button class="answer unknown" type="button" (click)="markUnknown()">
+      <button class="answer unknown" type="button" [disabled]="savingReview()" (click)="markUnknown()">
         <i class="pi pi-times" aria-hidden="true"></i>
         Non la so
       </button>
     </div>
   } @else {
     <div class="empty-state">
-      <strong>Sessione completata.</strong>
-      <button type="button" (click)="loadCards()">Ricomincia</button>
+      <strong>{{ activeModeConfig().label }} completato.</strong>
+      <span>Passa a un'altra modalita o ricarica il deck.</span>
+      <button type="button" (click)="loadCards()">Ricarica</button>
     </div>
   }
 </section>
