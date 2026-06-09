@@ -1,0 +1,48 @@
+<!--
+  Login form — esempio canonico di Signal Forms (Angular 21).
+
+  Binding:
+    [formField]="loginForm.username"  → collega input a campo del form
+    loginForm.username().touched()    → state reattivo (touched / valid / errors)
+
+  API experimental in Angular 21. Vedi CLAUDE.md frontend per il pattern.
+-->
+<section class="login-container">
+  <h1>Accedi</h1>
+
+  <form (submit)="onSubmit($event)">
+    <label>
+      <span>Matricola</span>
+      <input type="text" [formField]="loginForm.username" autocomplete="username" />
+      @if (loginForm.username().touched() && !loginForm.username().valid()) {
+        <small class="error">
+          @for (err of loginForm.username().errors(); track err) {
+            {{ err.message }}
+          }
+        </small>
+      }
+    </label>
+
+    <label>
+      <span>Password</span>
+      <input type="password" [formField]="loginForm.password" autocomplete="current-password" />
+      @if (loginForm.password().touched() && !loginForm.password().valid()) {
+        <small class="error">
+          @for (err of loginForm.password().errors(); track err) {
+            {{ err.message }}
+          }
+        </small>
+      }
+    </label>
+
+    <button
+      type="submit"
+      [disabled]="!loginForm().valid() || authStore.loading()">
+      @if (authStore.loading()) {
+        Accesso in corso…
+      } @else {
+        Accedi
+      }
+    </button>
+  </form>
+</section>

@@ -1,0 +1,19 @@
+﻿{
+  "name": "Prettier Check",
+  "description": "Verifica formattazione Prettier dopo modifiche a file TS/HTML",
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if echo \"$TOOL_INPUT\" | grep -qE '\\.(ts|html)$'; then cd \"$CLAUDE_PROJECT_DIR/FlashCardUniKey.FE\" && npx prettier --check --ignore-unknown \"$TOOL_INPUT\" 2>&1 | tail -3; fi",
+            "blocking": false,
+            "description": "Prettier check dopo modifica file TS/HTML"
+          }
+        ]
+      }
+    ]
+  }
+}

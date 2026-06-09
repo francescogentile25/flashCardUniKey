@@ -1,0 +1,77 @@
+<section class="create-shell">
+  <a class="back-link" routerLink="/">
+    <i class="pi pi-arrow-left" aria-hidden="true"></i>
+    Torna al deck
+  </a>
+
+  <header>
+    <p>Card studio</p>
+    <h1>Crea una nuova domanda.</h1>
+  </header>
+
+  @if (saved()) {
+    <div class="feedback success">Card salvata. Puoi inserirne un'altra.</div>
+  }
+
+  @if (error()) {
+    <div class="feedback error">{{ error() }}</div>
+  }
+
+  <form (submit)="onSubmit($event)">
+    <label>
+      <span>Domanda</span>
+      <textarea rows="5" [formField]="cardForm.question"></textarea>
+      @if (cardForm.question().touched() && !cardForm.question().valid()) {
+        <small>
+          @for (err of cardForm.question().errors(); track err) {
+            {{ err.message }}
+          }
+        </small>
+      }
+    </label>
+
+    <label>
+      <span>Risposta</span>
+      <textarea rows="7" [formField]="cardForm.answer"></textarea>
+      @if (cardForm.answer().touched() && !cardForm.answer().valid()) {
+        <small>
+          @for (err of cardForm.answer().errors(); track err) {
+            {{ err.message }}
+          }
+        </small>
+      }
+    </label>
+
+    <div class="control">
+      <span>Area</span>
+      <div class="segmented">
+        <button type="button" [class.active]="state().area === 'frontend'" (click)="setArea('frontend')">
+          Frontend
+        </button>
+        <button type="button" [class.active]="state().area === 'backend'" (click)="setArea('backend')">
+          Backend
+        </button>
+      </div>
+    </div>
+
+    <div class="control">
+      <span>Livello</span>
+      <div class="segmented">
+        <button type="button" [class.active]="state().level === 'junior'" (click)="setLevel('junior')">
+          Junior
+        </button>
+        <button type="button" [class.active]="state().level === 'middle'" (click)="setLevel('middle')">
+          Middle
+        </button>
+      </div>
+    </div>
+
+    <button class="submit" type="submit" [disabled]="!cardForm().valid() || saving()">
+      @if (saving()) {
+        Salvataggio...
+      } @else {
+        Salva card
+      }
+    </button>
+  </form>
+</section>

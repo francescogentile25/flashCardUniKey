@@ -1,0 +1,17 @@
+:host {
+  display: block;
+  min-height: 100dvh;
+  background: #0e1217;
+}
+
+.app-main {
+  min-height: 100dvh;
+  padding-bottom: 78px;
+}
+
+@media (min-width: 760px) {
+  .app-main {
+    padding-bottom: 0;
+    padding-top: 76px;
+  }
+}

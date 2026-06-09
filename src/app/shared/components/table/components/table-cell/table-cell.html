@@ -1,0 +1,313 @@
+<!-- Rendering del valore di cella in base alla configurazione customValue -->
+@if (hasCustomValue(column())) {
+
+  @switch (column().customValue?.columnType) {
+
+    <!-- Colonna di tipo data: formato tramite moment e dateConfig (o dateFormat legacy) -->
+    @case (ColumnTypeEnum.Date) {
+      @if (column().customValue?.dateConfig) {
+        <!-- Nuova configurazione con dateConfig -->
+        @if (column().customValue!.dateConfig!.customFormat) {
+          <!-- Usa customFormat se definito -->
+          <span
+            [pTooltip]="column().customValue!.dateConfig!.tooltip | resolveStringOrFn : rowData()"
+            [class]="column().customValue!.dateConfig!.styleClass | resolveStringOrFn : rowData()"
+            [style]="column().customValue!.dateConfig!.style"
+          >
+            {{ column().customValue!.dateConfig!.customFormat!(getValue(column(), rowData()), rowData()) }}
+          </span>
+        } @else {
+          @if (!!getValue(column(), rowData())) {
+            <span
+              [pTooltip]="column().customValue!.dateConfig!.tooltip | resolveStringOrFn : rowData()"
+              [class]="column().customValue!.dateConfig!.styleClass | resolveStringOrFn : rowData()"
+              [style]="column().customValue!.dateConfig!.style"
+            >
+              {{ moment(getValue(column(), rowData())).format(column().customValue!.dateConfig!.format || 'DD/MM/YYYY') }}
+            </span>
+          } @else {
+            <!-- Fallback per valori null/undefined -->
+            @if (column().customValue!.dateConfig!.fallback) {
+              <span
+                [pTooltip]="column().customValue!.dateConfig!.tooltip | resolveStringOrFn : rowData()"
+                [class]="column().customValue!.dateConfig!.styleClass | resolveStringOrFn : rowData()"
+                [style]="column().customValue!.dateConfig!.style"
+              >
+                {{ column().customValue!.dateConfig!.fallback | resolveStringOrFn : rowData() }}
+              </span>
+            } @else {
+              <p-tag value="Non Definito" severity="secondary" />
+            }
+          }
+        }
+      } @else {
+        <!-- Fallback per backward compatibility con dateFormat (deprecato) -->
+        @if (!!getValue(column(), rowData())) {
+          {{ moment(getValue(column(), rowData())).format(column().customValue?.dateFormat || 'DD/MM/YYYY') }}
+        } @else {
+          <p-tag pTooltip="Non Definito" value="Non Definito" severity="secondary" />
+        }
+      }
+    }
+
+    <!-- Colonna booleana: tag success/danger, con supporto a customBooleanValue -->
+    @case (ColumnTypeEnum.Boolean) {
+      @if (column().customValue?.booleanConfig?.customBooleanValue) {
+        @if (column().customValue?.booleanConfig?.customBooleanValue(rowData())) {
+          <p-tag
+            [pTooltip]="column().customValue?.booleanConfig?.tooltip | resolveStringOrFn : rowData()"
+            icon="pi pi-check" severity="success" />
+        } @else {
+          <p-tag
+            [pTooltip]="column().customValue?.booleanConfig?.tooltip | resolveStringOrFn : rowData()"
+            icon="pi pi-times" severity="danger" />
+        }
+      }
+      @else {
+        @if (getValue(column(), rowData()) | asBool) {
+          <p-tag
+            [pTooltip]="column().customValue?.booleanConfig?.tooltip | resolveStringOrFn : rowData()"
+            icon="pi pi-check" severity="success" />
+        } @else {
+          <p-tag
+            [pTooltip]="column().customValue?.booleanConfig?.tooltip | resolveStringOrFn : rowData()"
+            icon="pi pi-times" severity="danger" />
+        }
+      }
+    }
+
+    <!-- Colonna checkbox: checkbox sola lettura con eventuale dialog di conferma -->
+    @case (ColumnTypeEnum.Checkbox) {
+      <div class="flex items-center">
+        <p-checkbox
+          [inputId]="rowData().id + '-' + rowIndex()"
+          [pTooltip]="column().customValue?.checkboxConfig?.tooltip | resolveStringOrFn : rowData()"
+          [binary]="true"
+          [readonly]="!!column().customValue?.checkboxConfig?.confirmDialogConfig"
+          [ngModel]="column().customValue?.checkboxConfig?.value(rowData())"
+          (click)="$event.stopPropagation();checkCheckboxConfirmDialog(column().customValue?.checkboxConfig, rowData())"
+        />
+        @if (column().customValue?.checkboxConfig?.label) {
+          <label
+            [for]="rowData().id + '-' + rowIndex()"
+            class="ml-2"
+          >
+            {{ column().customValue?.checkboxConfig?.label | resolveStringOrFn : rowData() }}
+          </label>
+        }
+      </div>
+    }
+
+    <!-- Colonna switch: toggle sola lettura con eventuale dialog di conferma -->
+    @case (ColumnTypeEnum.Switch) {
+      <div class="flex items-center">
+        <p-toggle-switch
+          [inputId]="rowData().id + '-' + rowIndex()"
+          [pTooltip]="column().customValue?.switchConfig?.tooltip | resolveStringOrFn : rowData()"
+          [readonly]="!!column().customValue?.switchConfig?.confirmDialogConfig"
+          [ngModel]="column().customValue?.switchConfig?.value(rowData())"
+          (click)="$event.stopPropagation();checkSwitchConfirmDialog(column().customValue?.switchConfig, rowData())"
+        ></p-toggle-switch>
+        @if (column().customValue?.switchConfig?.label) {
+          <label
+            [for]="rowData().id + '-' + rowIndex()"
+            class="ml-2"
+          >
+            {{ column().customValue?.switchConfig?.label | resolveStringOrFn : rowData() }}
+          </label>
+        }
+      </div>
+
+    }
+
+    <!-- Colonna icona/label: gestisce le varie combinazioni di IconLabelStyleEnum -->
+    @case (ColumnTypeEnum.Icon) {
+      @switch (column().customValue?.iconConfig?.iconLabelStyle) {
+
+        <!-- Solo icona -->
+        @case (IconLabelStyleEnum.IconOnly) {
+          <div class="flex items-center gap-2">
+            <i
+              [pTooltip]="column().customValue?.iconConfig?.tooltip | resolveStringOrFn : rowData()"
+              class="pi"
+              [class]="
+                column().customValue?.iconConfig?.icon + ' ' +
+                column().customValue?.iconConfig?.styleClass + ' ' +
+                (column().customValue?.iconConfig?.spin ? 'pi-spin' : '')
+              "
+              [style]="column().customValue?.iconConfig?.style"
+            ></i>
+          </div>
+        }
+
+        <!-- Icona seguita da label -->
+        @case (IconLabelStyleEnum.IconAndLabel) {
+          <div class="flex items-center gap-2">
+            <i
+              [pTooltip]="column().customValue?.iconConfig?.tooltip | resolveStringOrFn : rowData()"
+              class="pi"
+              [class]="
+                column().customValue?.iconConfig?.icon + ' ' +
+                column().customValue?.iconConfig?.styleClass + ' ' +
+                (column().customValue?.iconConfig?.spin ? 'pi-spin' : '')
+              "
+              [style]="column().customValue?.iconConfig?.style"
+            ></i>
+            <span>{{ column().customValue?.iconConfig?.label | resolveStringOrFn : rowData() }}</span>
+          </div>
+        }
+
+        <!-- Label seguita da icona -->
+        @case (IconLabelStyleEnum.LabelAndIcon) {
+          <div class="flex items-center gap-2">
+            <span>{{ column().customValue?.iconConfig?.label | resolveStringOrFn : rowData() }}</span>
+            <i
+              [pTooltip]="column().customValue?.iconConfig?.tooltip | resolveStringOrFn : rowData()"
+              class="pi"
+              [class]="
+                column().customValue?.iconConfig?.icon + ' ' +
+                column().customValue?.iconConfig?.styleClass + ' ' +
+                (column().customValue?.iconConfig?.spin ? 'pi-spin' : '')
+              "
+              [style]="column().customValue?.iconConfig?.style"
+            ></i>
+          </div>
+        }
+
+        <!-- Solo label -->
+        @case (IconLabelStyleEnum.LabelOnly) {
+          <div class="flex items-center gap-2">
+            <span>{{ column().customValue?.iconConfig?.label | resolveStringOrFn : rowData() }}</span>
+          </div>
+        }
+
+        <!-- Template personalizzato per icona/label -->
+        @case (IconLabelStyleEnum.Template) {
+          <div [innerHTML]="column().customValue?.iconConfig?.template | safeHtml"></div>
+        }
+      }
+    }
+
+    <!-- Colonna tag: template personalizzato oppure p-tag configurato -->
+    @case (ColumnTypeEnum.Tags) {
+      @if (column().customValue?.tagConfig?.template) {
+        <div [innerHTML]="column().customValue?.tagConfig?.template | safeHtml"></div>
+      } @else {
+        <p-tag
+          [icon]="'pi ' + (column().customValue?.tagConfig?.iconConfig?.icon | resolveStringOrFn : rowData())"
+          [value]="column().customValue?.tagConfig?.value(rowData())"
+          [severity]="column().customValue?.tagConfig?.severity(rowData())"
+          [rounded]="column().customValue?.tagConfig?.pill"
+          [style]="column().customValue?.tagConfig?.style"
+          [class]="column().customValue?.tagConfig?.styleClass"
+        ></p-tag>
+      }
+    }
+
+    <!-- Colonna con stripe colorata a sinistra + testo -->
+    @case (ColumnTypeEnum.WithStripe) {
+      <div class="flex gap-2 items-center">
+        <span
+          class="w-[4px] min-h-full rounded-full h-[22px]"
+          [style.backgroundColor]="column().customValue?.stripeConfig?.hexColor(rowData())"
+        ></span>
+        <span>{{ getValue(column(), rowData()) }}</span>
+      </div>
+    }
+
+    <!-- Colonna valuta: usa il currency pipe con configurazione dedicata -->
+    @case (ColumnTypeEnum.Currency) {
+      {{
+        (getValue(column(), rowData())
+          | currency
+          : column().customValue?.currencyConfig?.currencyCode
+            : column().customValue?.currencyConfig?.display)
+      }}
+    }
+
+    <!-- Colonna HTML: renderizza HTML con htmlConfig (o html legacy) -->
+    @case (ColumnTypeEnum.HTML) {
+      @if (column().customValue?.htmlConfig) {
+        <!-- Nuova configurazione con htmlConfig -->
+        <div
+          [pTooltip]="column().customValue!.htmlConfig!.tooltip | resolveStringOrFn : rowData()"
+          [class]="column().customValue!.htmlConfig!.styleClass | resolveStringOrFn : rowData()"
+          [style]="column().customValue!.htmlConfig!.style"
+          [innerHTML]="
+            (column().customValue!.htmlConfig!.content | resolveStringOrFn : rowData())
+            | safeHtml : (column().customValue!.htmlConfig!.sanitize ?? true)
+          "
+        ></div>
+      } @else {
+        <!-- Fallback per backward compatibility con html (deprecato) -->
+        <div [innerHTML]="column().customValue?.html | safeHtml"></div>
+      }
+    }
+
+    <!-- Colonna asincrona: valore ottenuto tramite async pipe -->
+    @case (ColumnTypeEnum.Async) {
+      @if (column().customValue?.asyncConfig) {
+        <!-- Nuova configurazione con asyncConfig -->
+        <div
+          [pTooltip]="column().customValue!.asyncConfig!.tooltip | resolveStringOrFn : rowData()"
+          [class]="column().customValue!.asyncConfig!.styleClass | resolveStringOrFn : rowData()"
+          [style]="column().customValue!.asyncConfig!.style"
+        >
+          @if (column().customValue!.asyncConfig!.transform) {
+            <!-- Con trasformazione del valore -->
+            {{ column().customValue!.asyncConfig!.transform!(
+              column().customValue!.asyncConfig!.source(rowData()) | async,
+              rowData()
+            ) }}
+          } @else {
+            <!-- Senza trasformazione -->
+            {{ column().customValue!.asyncConfig!.source(rowData()) | async }}
+          }
+        </div>
+      } @else {
+        <!-- Fallback per backward compatibility con observable (deprecato) -->
+        {{ getValue(column(), rowData()) | async }}
+      }
+    }
+
+    <!-- Colonna con funzione customValueFn applicata al valore -->
+    @case (ColumnTypeEnum.CustomValueFn) {
+      @if (column().customValue?.customValueFnConfig) {
+        <!-- Nuova configurazione con customValueFnConfig -->
+        @if (column().customValue!.customValueFnConfig!.valueFn(rowData()) != null) {
+          <span
+            [pTooltip]="column().customValue!.customValueFnConfig!.tooltip | resolveStringOrFn : rowData()"
+            [class]="column().customValue!.customValueFnConfig!.styleClass | resolveStringOrFn : rowData()"
+            [style]="column().customValue!.customValueFnConfig!.style | resolveStringOrFn : rowData()"
+          >
+            @if (column().customValue!.customValueFnConfig!.prefix) {
+              {{ column().customValue!.customValueFnConfig!.prefix | resolveStringOrFn : rowData() }}
+            }{{ column().customValue!.customValueFnConfig!.valueFn(rowData()) }}@if (column().customValue!.customValueFnConfig!.suffix) {
+              {{ column().customValue!.customValueFnConfig!.suffix | resolveStringOrFn : rowData() }}
+            }
+          </span>
+        } @else {
+          <!-- Fallback per valori null/undefined -->
+          @if (column().customValue!.customValueFnConfig!.fallback) {
+            <span
+              [pTooltip]="column().customValue!.customValueFnConfig!.tooltip | resolveStringOrFn : rowData()"
+              [class]="column().customValue!.customValueFnConfig!.styleClass | resolveStringOrFn : rowData()"
+              [style]="column().customValue!.customValueFnConfig!.style | resolveStringOrFn : rowData()"
+            >
+              {{ column().customValue!.customValueFnConfig!.fallback }}
+            </span>
+          } @else {
+            <p-tag value="Non Definito" severity="secondary" />
+          }
+        }
+      } @else {
+        <!-- Fallback per backward compatibility con customValueFn (deprecato) -->
+        {{ getValue(column(), rowData()) | fn : column().customValue?.customValueFn! }}
+      }
+    }
+  }
+
+} @else {
+  <!-- Fallback: mostra il valore semplice se non è definito customValue -->
+  {{ getValue(column(), rowData()) }}
+}

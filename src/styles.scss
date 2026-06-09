@@ -1,0 +1,58 @@
+/* You can add global styles to this file, and also import other style files */
+@layer tailwind-base, primeng, tailwind-utilities;
+
+@layer tailwind-base {
+  @tailwind base;
+}
+
+@layer tailwind-utilities {
+  @tailwind components;
+  @tailwind utilities;
+}
+
+@import "primeicons/primeicons.css";
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,100..900;1,100..900&display=swap');
+
+:root {
+  --base-font-size: 14px;
+  --base-font-family: "Noto Sans";
+  --blumelli: #003057;
+  --header-height: 70px;
+  --footer-height: 50px;
+  --main-height: calc(100dvh - var(--header-height) - var(--footer-height));
+}
+
+* {
+  font-family: var(--base-font-family), sans-serif;
+}
+
+html, body { height: 100%; }
+
+html {
+  font-size: var(--base-font-size);
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+}
+
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--blumelli);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #D2D7DF;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #B5B6C4;
+  border-radius: 4px;
+}

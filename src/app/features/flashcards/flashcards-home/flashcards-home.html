@@ -1,0 +1,92 @@
+<section class="trainer-shell">
+  <header class="hero">
+    <p>Interview deck</p>
+    <h1>Swipe drill per domande FE e BE.</h1>
+  </header>
+
+  @if (error()) {
+    <div class="notice" role="alert">
+      <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>
+      <span>{{ error() }}</span>
+    </div>
+  }
+
+  <section class="score-strip" aria-label="Statistiche sessione">
+    <span><strong>{{ knownCount() }}</strong> So</span>
+    <span><strong>{{ remainingCount() }}</strong> Deck</span>
+    <span><strong>{{ unknownCount() }}</strong> Ripasso</span>
+  </section>
+
+  <div class="progress-track" aria-label="Avanzamento">
+    <span [style.width.%]="progress()"></span>
+  </div>
+
+  @if (loading()) {
+    <div class="empty-state">Caricamento deck...</div>
+  } @else if (empty()) {
+    <div class="empty-state">
+      <strong>Nessuna card.</strong>
+      <a routerLink="/new">Crea la prima domanda</a>
+    </div>
+  } @else if (currentCard(); as card) {
+    <div class="deck-zone">
+      <article
+        class="study-card"
+        [class.is-flipped]="isAnswerVisible()"
+        [class.frontend]="card.area === 'frontend'"
+        [class.backend]="card.area === 'backend'"
+        [style.transform]="'translateX(' + dragOffset() + 'px) rotate(' + dragOffset() / 22 + 'deg)'"
+        (pointerdown)="onPointerDown($event)"
+        (pointermove)="onPointerMove($event)"
+        (pointerup)="onPointerUp()"
+        (pointercancel)="onPointerUp()">
+        <div class="face front">
+          <div class="chips">
+            <span>{{ card.area === 'frontend' ? 'Frontend' : 'Backend' }}</span>
+            <span>{{ card.level }}</span>
+          </div>
+          <p>Domanda</p>
+          <h2>{{ card.question }}</h2>
+          <button class="ghost-button" type="button" (click)="flipCard($event)">
+            <i class="pi pi-eye" aria-hidden="true"></i>
+            Mostra risposta
+          </button>
+        </div>
+
+        <div class="face back">
+          <div class="chips">
+            <span>Risposta</span>
+            <span>{{ card.level }}</span>
+          </div>
+          <p>{{ card.answer }}</p>
+          <button class="ghost-button" type="button" (click)="flipCard($event)">
+            <i class="pi pi-undo" aria-hidden="true"></i>
+            Torna alla domanda
+          </button>
+        </div>
+      </article>
+    </div>
+
+    <div class="swipe-hint">
+      <span><i class="pi pi-arrow-left" aria-hidden="true"></i> La so</span>
+      <span>Trascina o usa i pulsanti</span>
+      <span>Non la so <i class="pi pi-arrow-right" aria-hidden="true"></i></span>
+    </div>
+
+    <div class="action-bar">
+      <button class="answer known" type="button" (click)="markKnown()">
+        <i class="pi pi-check" aria-hidden="true"></i>
+        La so
+      </button>
+      <button class="answer unknown" type="button" (click)="markUnknown()">
+        <i class="pi pi-times" aria-hidden="true"></i>
+        Non la so
+      </button>
+    </div>
+  } @else {
+    <div class="empty-state">
+      <strong>Sessione completata.</strong>
+      <button type="button" (click)="loadCards()">Ricomincia</button>
+    </div>
+  }
+</section>

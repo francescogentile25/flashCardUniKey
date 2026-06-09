@@ -1,0 +1,336 @@
+<!-- Tabella principale condivisa -->
+
+  <!-- Identificativo della tabella -->
+  <!-- Chiave univoca per identificare le righe -->
+  <!-- Dati visualizzati (dopo filtro locale) -->
+  <!-- Righe bloccate (frozen) in alto -->
+  <!-- Configurazione delle colonne -->
+  <!-- Abilita il resize delle colonne -->
+  <!-- Dimensione della tabella (small/large) -->
+  <!-- Mostra le linee di griglia -->
+  <!-- Righe alternate (striped) -->
+  <!-- Highlight della riga al passaggio del mouse (utile per righe espandibili) -->
+
+  <!-- Paginazione frontend/backend -->
+
+  <!-- Stato delle righe espanse -->
+
+  <!-- Selezione righe (checkbox / row selection) -->
+
+  <!-- Evento di ordinamento delegato al backend -->
+<p-table
+  #dt
+  [id]="tableConfig().id"
+  [dataKey]="'id'"
+  [value]="data()"
+  [frozenValue]="tableConfig().frozenValues ?? undefined"
+  [columns]="tableConfig().columnsConfig"
+  [resizableColumns]="tableConfig().resizeableColumns"
+  [size]="tableConfig().tableSize"
+  [showGridlines]="tableConfig().showGridlines"
+  [stripedRows]="tableConfig().stripedRows"
+  [rowHover]="hasExpandableRows()"
+
+  [paginator]="hasPagination()"
+  [lazy]="hasBackendPagination()"
+  [rows]="rows()"
+  [rowsPerPageOptions]="rowsPerPageOptions()"
+  [paginatorDropdownAppendTo]="'body'"
+  [showCurrentPageReport]="hasPagination()"
+  [first]="first()"
+  [totalRecords]="totalRecords()"
+  currentPageReportTemplate="Mostrando dal {first}° al {last}° di {totalRecords} record"
+  (onPage)="onPageChange($event)"
+
+  [expandedRowKeys]="expandedRows()"
+
+  [(selection)]="selectedEntities"
+
+  (onSort)="onBackendSort($event)"
+>
+  <!-- Caption: header superiore della tabella con titolo, filtro, pulsanti azione globale -->
+  <ng-template #caption>
+    <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-2">
+      <!-- Titolo e sottotitolo tabella -->
+      <div class="flex flex-col gap-1">
+        <span class="text-xl font-bold">{{ displayTableTitle() }}</span>
+        @if (displayTableSubtitle()) {
+          <span class="text-xs font-semibold text-gray-400 tracking-wide">{{ displayTableSubtitle() | uppercase }}</span>
+        }
+      </div>
+
+      <!-- Azioni globali: filtro, aggiungi record, export -->
+      <div class="flex justify-end items-center gap-2">
+        <!-- Filtro globale, se abilitato -->
+        @if (hasFilter()) {
+          <p-iconfield iconPosition="left" class="ml-auto">
+            <p-inputicon>
+              <i class="pi pi-search"></i>
+            </p-inputicon>
+            <input trimSpaces [(ngModel)]="filterInput" fluid="true" pInputText type="text" placeholder="Cerca" />
+          </p-iconfield>
+        }
+
+        <!-- Pulsante "Aggiungi record", se configurato -->
+        @if (hasAddRecordFn()) {
+          <p-button
+            [label]="displayAddRecordLabel()"
+            [icon]="displayAddRecordIcon()"
+            [severity]="tableConfig().addRecordConfig?.severity || 'primary'"
+            [size]="tableConfig().addRecordConfig?.size || 'small'"
+            [outlined]="tableConfig().addRecordConfig?.outlined"
+            [text]="tableConfig().addRecordConfig?.text"
+            [raised]="tableConfig().addRecordConfig?.raised"
+            [rounded]="tableConfig().addRecordConfig?.rounded"
+            [disabled]="tableConfig().addRecordConfig?.disabled"
+            [class]="tableConfig().addRecordConfig?.styleClass"
+            [style]="tableConfig().addRecordConfig?.style"
+            [pTooltip]="displayAddRecordTooltip()"
+            tooltipPosition="top"
+            (onClick)="addRecordHandler(tableConfig().addRecordConfig)"
+            (click)="$event.stopPropagation()"/>
+        }
+
+        <!-- Pulsante di export dati, se configurato -->
+        @if (hasExportDataFn()) {
+          <p-button
+            [label]="displayExportLabel()"
+            [icon]="displayExportIcon()"
+            [severity]="tableConfig().exportConfig?.severity || 'primary'"
+            [size]="tableConfig().exportConfig?.size || 'small'"
+            [outlined]="tableConfig().exportConfig?.outlined"
+            [text]="tableConfig().exportConfig?.text"
+            [raised]="tableConfig().exportConfig?.raised"
+            [rounded]="tableConfig().exportConfig?.rounded"
+            [disabled]="tableConfig().exportConfig?.disabled || (tableConfig().exportConfig?.fromCheckboxSelection && selectedEntities().length === 0)"
+            [class]="tableConfig().exportConfig?.styleClass"
+            [style]="tableConfig().exportConfig?.style"
+            [pTooltip]="displayExportTooltip()"
+            tooltipPosition="top"
+            (onClick)="exportDataHandler(tableConfig().exportConfig)"
+            (click)="$event.stopPropagation()"/>
+        }
+      </div>
+    </div>
+  </ng-template>
+
+  <!-- Header della tabella: colonne, checkbox selezione, colonna azioni -->
+  <ng-template #header let-columns>
+    <tr>
+      <!-- Colonna checkbox selezione (se abilitata o richiesta per export) -->
+      @if (tableConfig().selectableRows || (hasExportDataFn() && hasExportDataWithSelectedEntities())) {
+        <th pFrozenColumn style="width: 4rem; text-align: center">
+          <p-tableHeaderCheckbox (change)="selectedEntitiesOutput.emit(selectedEntities())"></p-tableHeaderCheckbox>
+        </th>
+      }
+
+      <!-- Intestazioni colonne dinamiche -->
+        <!-- Abilita ordinamento solo se la colonna è configurata come sortable -->
+      @for (col of columns; track col) {
+        <th
+          pFrozenColumn
+          [frozen]="col.frozenColumn"
+          pResizableColumn
+          [pSortableColumn]="isColumnSortable(col) ? (col.property) : null"
+          [style.width.%]="col.width">
+        <div class="flex items-center gap-2">
+          <span>{{ getColumnLabel(col) | titlecase }}</span>
+          <!-- Icona di sort quando la colonna è ordinabile -->
+          @if (isColumnSortable(col)) {
+            <!-- IMPORTANTE: field deve corrispondere a col.property -->
+            <p-sortIcon [field]="col.property" />
+          }
+        </div>
+        </th>
+      }
+
+      <!-- Colonna azioni, se configurata -->
+      @if (hasActions()) {
+        <th
+          [style.width]="tableConfig().actionsConfig?.columnWidth"
+          [ngStyle]="tableConfig().actionsConfig?.columnStyle"
+          [ngClass]="tableConfig().actionsConfig?.columnStyleClass"
+        >
+          {{ displayActionsColumnLabel() }}
+        </th>
+      }
+    </tr>
+  </ng-template>
+
+  <!-- Corpo della tabella principale -->
+  <ng-template #body let-rowData let-columns="columns" let-expanded="expanded">
+    <!-- Righe con stile/classe condizionale e supporto row toggler per espansione -->
+    <tr
+      [ngClass]="getRowClass(rowData)"
+      [ngStyle]="getRowStyle(rowData)"
+      [pRowToggler]="hasExpandableRows() ? rowData : undefined">
+      <!-- Colonna checkbox per selezione righe -->
+      @if (tableConfig().selectableRows || (hasExportDataFn() && hasExportDataWithSelectedEntities())) {
+        <td pFrozenColumn style="text-align: center">
+          <p-tableCheckbox
+            (click)="$event.stopPropagation()"
+            (change)="selectedEntitiesOutput.emit(selectedEntities())"
+            [value]="rowData" />
+        </td>
+      }
+
+      <!-- Celle dati per ogni colonna -->
+      @for (col of columns; track col; let i = $index) {
+        <td pFrozenColumn [frozen]="col.frozenColumn">
+          <!-- Componente dedicato al rendering della singola cella -->
+          <app-table-cell
+            [column]="col"
+            [rowData]="rowData"
+            [rowIndex]="i">
+          </app-table-cell>
+        </td>
+      }
+
+      <!-- Colonna azioni di riga, se presente -->
+      @if (hasActions()) {
+        <td>
+          <app-table-actions
+            [actions]="tableConfig().actionsConfig!.actions"
+            [rowData]="rowData"
+            [actionsView]="getActionsView()"
+            [maxInlineActions]="getMaxInlineActions()"
+            (actionClick)="onActionClick($event)">
+          </app-table-actions>
+        </td>
+      }
+
+    </tr>
+  </ng-template>
+
+  <!-- Template per la riga espansa -->
+  <ng-template #expandedrow let-rowData let-columns="columns">
+    <tr>
+      <!-- La cella espansa occupa l'intera larghezza della tabella -->
+      <td
+        [attr.colspan]="columns.length
+            + (tableConfig().selectableRows || (hasExportDataFn() && hasExportDataWithSelectedEntities()) ? 1 : 0)
+            + (hasActions() ? 1 : 0)"
+      >
+        <div class="mt-2 rounded-lg border border-gray-200 bg-gray-50 p-3">
+          <!-- Se è configurata la sezione righe espandibili -->
+          @if (tableConfig().expandableRowsConfig; as cfg) {
+
+            <!-- Header della tabella interna espansa (titolo + azioni) -->
+            <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-2">
+              <div class="flex flex-col gap-0.5 mb-2">
+                  <span class="text-sm font-semibold text-gray-800">
+                    {{ getExpandedTableTitle(rowData) }}
+                  </span>
+                @if (getExpandedTableSubtitle(rowData)) {
+                  <span class="text-xs text-gray-500">
+                      {{ getExpandedTableSubtitle(rowData) }}
+                    </span>
+                }
+              </div>
+              <!-- Pulsante "Aggiungi record" per la tabella espansa, se previsto -->
+              <div class="flex justify-end items-center gap-2  mb-2">
+                @if (hasExpandedTableAddRecordFn()) {
+                  <p-button
+                    [label]="getExpandedAddRecordLabel()"
+                    [icon]="getExpandedAddRecordIcon()"
+                    [severity]="cfg.addRecordConfig?.severity || 'primary'"
+                    [size]="cfg.addRecordConfig?.size || 'small'"
+                    [outlined]="cfg.addRecordConfig?.outlined"
+                    [text]="cfg.addRecordConfig?.text"
+                    [raised]="cfg.addRecordConfig?.raised"
+                    [rounded]="cfg.addRecordConfig?.rounded"
+                    [disabled]="cfg.addRecordConfig?.disabled"
+                    [class]="cfg.addRecordConfig?.styleClass"
+                    [style]="cfg.addRecordConfig?.style"
+                    [pTooltip]="getExpandedAddRecordTooltip()"
+                    tooltipPosition="top"
+                    (onClick)="addRecordHandler(cfg.addRecordConfig)"
+                    (click)="$event.stopPropagation()"/>
+                }
+              </div>
+            </div>
+
+            <!-- Tabella interna per i dati collegati (righe espanse) -->
+            <p-table
+              [value]="getExpandedRowData(rowData)"
+              [columns]="getExpandedColumnsConfig()"
+              [showGridlines]="cfg.showGridlines"
+              [stripedRows]="cfg.stripedRows"
+              [size]="cfg.tableSize"
+            >
+
+              <!-- Header della tabella interna (PrimeNG 21: template refs standard, niente pTemplate) -->
+              <ng-template #header let-expColumns>
+                <tr>
+                  @for (col of expColumns; track col) {
+                    <th>{{ getColumnLabel(col) | titlecase }}</th>
+                  }
+                  @if (hasExpandedActions()) {
+                    <th>{{ getExpandedActionsColumnLabel(rowData) }}</th>
+                  }
+                </tr>
+              </ng-template>
+
+              <!-- Corpo della tabella interna -->
+              <ng-template #body let-expRow let-expColumns="columns">
+                <tr [ngClass]="getExpandedRowClass(expRow)" [ngStyle]="getExpandedRowStyle(expRow)">
+                  @for (col of expColumns; track col; let i = $index) {
+                    <td>
+                      <app-table-cell
+                        [column]="col"
+                        [rowData]="expRow"
+                        [rowIndex]="i">
+                      </app-table-cell>
+                    </td>
+                  }
+
+                  <!-- Colonna azioni sulla tabella interna, se configurata -->
+                  @if (hasExpandedActions()) {
+                    <td>
+                      <app-table-actions
+                        [actions]="cfg.actionsConfig!.actions"
+                        [rowData]="expRow"
+                        [actionsView]="getExpandedActionsView()"
+                        [maxInlineActions]="getExpandedMaxInlineActions()"
+                        (actionClick)="onActionClick($event)">
+                      </app-table-actions>
+                    </td>
+                  }
+                </tr>
+              </ng-template>
+
+              <!-- Messaggio quando non ci sono elementi collegati -->
+              <ng-template #emptymessage let-expColumns>
+                <tr>
+                  <td [attr.colspan]="expColumns.length + (hasExpandedActions() ? 1 : 0)">
+                    <div class="flex flex-col items-center justify-center py-4 text-xs text-gray-500">
+                      Nessun elemento collegato
+                    </div>
+                  </td>
+                </tr>
+              </ng-template>
+            </p-table>
+
+          } @else {
+            <!-- Messaggio di fallback se la configurazione righe espandibili non è presente -->
+            <div class="text-xs text-gray-500">
+              Configurazione righe espandibili non definita.
+            </div>
+          }
+        </div>
+      </td>
+    </tr>
+  </ng-template>
+
+  <!-- Messaggio quando la tabella principale non ha dati -->
+  <ng-template #emptymessage let-columns>
+    <tr>
+      <td [colSpan]="columns.length + (tableConfig().selectableRows || (hasExportDataFn() && hasExportDataWithSelectedEntities()) ? 1 : 0) + (hasActions() ? 1 : 0)">
+        <div class="flex flex-col items-center justify-center py-8 text-gray-500">
+          <i class="pi pi-inbox text-4xl mb-2"></i>
+          <p class="text-lg">Nessun dato disponibile</p>
+        </div>
+      </td>
+    </tr>
+  </ng-template>
+</p-table>

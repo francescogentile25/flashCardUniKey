@@ -1,0 +1,143 @@
+<div class="flex items-center gap-2">
+  <!-- Seleziona la modalità di visualizzazione delle azioni -->
+  @switch (actionsView()) {
+
+    <!-- Vista Buttons: pulsanti "classici" (icona + stile, label gestita fuori) -->
+    @case (ActionViewEnum.Buttons) {
+      @for (action of visibleActions(); track action.label) {
+        <!-- (click)="$event.stopPropagation()" Evita che il click sulla cella azioni propaghi alla riga -->
+        <p-button
+          [icon]="action.icon | resolveStringOrFn : rowData()"
+          [severity]="action.severity || 'secondary'"
+          [size]="action.size || 'small'"
+          [outlined]="action.outlined"
+          [text]="action.text"
+          [raised]="action.raised"
+          [rounded]="action.rounded"
+          [disabled]="action.disabled"
+          [badge]="getBadgeValue(action)"
+          [badgeSeverity]="action.badgeConfig?.severity"
+          [class]="action.styleClass"
+          [style]="action.style"
+          [pTooltip]="action.tooltip | resolveStringOrFn : rowData()"
+          tooltipPosition="top"
+          (onClick)="onActionClick(action)"
+          (click)="$event.stopPropagation()"
+          />
+      }
+    }
+
+    <!-- Vista IconButtons: solo icone, con tooltip come etichetta -->
+    @case (ActionViewEnum.IconButtons) {
+      @for (action of visibleActions(); track action.label) {
+        <p-button
+          [icon]="action.icon | resolveStringOrFn : rowData()"
+          [severity]="action.severity || 'secondary'"
+          [size]="action.size || 'small'"
+          [outlined]="action.outlined"
+          [text]="action.text"
+          [raised]="action.raised"
+          [rounded]="action.rounded"
+          [disabled]="action.disabled"
+          [badge]="getBadgeValue(action)"
+          [badgeSeverity]="action.badgeConfig?.severity"
+          [class]="action.styleClass"
+          [style]="action.style"
+          [pTooltip]="(action.tooltip | resolveStringOrFn : rowData()) || (action.label | resolveStringOrFn : rowData())"
+          tooltipPosition="top"
+          (onClick)="onActionClick(action)"
+          (click)="$event.stopPropagation()"
+        />
+      }
+    }
+
+    <!-- Vista Menu: tutte le azioni raccolte in un menu a tendina -->
+    @case (ActionViewEnum.Menu) {
+      <p-button
+        icon="pi pi-ellipsis-v"
+        [text]="true"
+        [rounded]="true"
+        severity="secondary"
+        size="small"
+        (onClick)="menu.toggle($event)"
+        (click)="$event.stopPropagation()"
+      />
+      <p-menu
+        #menu
+        [model]="menuItems()"
+        [popup]="true"
+        appendTo="body"
+      />
+    }
+
+    <!-- Vista Split: azione principale + menu con le azioni secondarie -->
+    @case (ActionViewEnum.Split) {
+      @if (primaryAction(); as primary) {
+        <p-split-button
+          [icon]="primary.icon | resolveStringOrFn : rowData()"
+          [severity]="primary.severity || 'primary'"
+          [size]="primary.size || 'small'"
+          [outlined]="primary.outlined"
+          [raised]="primary.raised"
+          [rounded]="primary.rounded"
+          [disabled]="primary.disabled"
+          [model]="secondaryMenuItems()"
+          (onClick)="onActionClick(primary)"
+          (click)="$event.stopPropagation()"
+          appendTo="body"
+        />
+      }
+    }
+
+    <!-- Vista Hybrid: alcune azioni inline, le altre in un menu di overflow -->
+    @case (ActionViewEnum.Hybrid) {
+      <!-- Azioni mostrate inline -->
+      @for (action of inlineActions(); track action.label) {
+        <p-button
+          [icon]="action.icon | resolveStringOrFn : rowData()"
+          [severity]="action.severity || 'secondary'"
+          [size]="action.size || 'small'"
+          [outlined]="action.outlined"
+          [text]="action.text"
+          [raised]="action.raised"
+          [rounded]="action.rounded"
+          [disabled]="action.disabled"
+          [badge]="getBadgeValue(action)"
+          [badgeSeverity]="action.badgeConfig?.severity"
+          [class]="action.styleClass"
+          [style]="action.style"
+          [pTooltip]="(action.tooltip | resolveStringOrFn : rowData()) || (action.label | resolveStringOrFn : rowData())"
+          tooltipPosition="top"
+          (onClick)="onActionClick(action)"
+          (click)="$event.stopPropagation()"
+        />
+      }
+
+      <!-- Menu di overflow per le azioni in eccesso -->
+      @if (overflowActions().length > 0) {
+        <p-button
+          icon="pi pi-ellipsis-v"
+          [text]="true"
+          [rounded]="true"
+          severity="secondary"
+          size="small"
+          (onClick)="overflowMenu.toggle($event)"
+          (click)="$event.stopPropagation()"
+        />
+        <p-menu
+          #overflowMenu
+          [model]="overflowMenuItems()"
+          [popup]="true"
+          appendTo="body"
+        />
+      }
+    }
+
+    <!-- Vista Custom: il chiamante fornisce un template HTML personalizzato -->
+    @case (ActionViewEnum.Custom) {
+      @if (customTemplate()) {
+        <div [innerHTML]="customTemplate() | safeHtml"></div>
+      }
+    }
+  }
+</div>
