@@ -1,7 +1,11 @@
 <section class="trainer-shell">
   <header class="hero">
-    <p>Sprint 5 giorni</p>
+    <p>Ripasso medicina</p>
     <h1>Studia dove perdi punti.</h1>
+    <nav class="hero-actions">
+      <a routerLink="/new"><i class="pi pi-plus" aria-hidden="true"></i> Nuova card</a>
+      <a routerLink="/import"><i class="pi pi-file-import" aria-hidden="true"></i> Genera da PDF</a>
+    </nav>
   </header>
 
   @if (error()) {
@@ -50,8 +54,6 @@
       <article
         class="study-card"
         [class.is-flipped]="isAnswerVisible()"
-        [class.frontend]="card.area === 'frontend'"
-        [class.backend]="card.area === 'backend'"
         [style.transform]="'translateX(' + dragOffset() + 'px) rotate(' + dragOffset() / 22 + 'deg)'"
         (pointerdown)="onPointerDown($event)"
         (pointermove)="onPointerMove($event)"
@@ -59,8 +61,6 @@
         (pointercancel)="onPointerUp()">
         <div class="face front">
           <div class="chips">
-            <span>{{ card.area === 'frontend' ? 'Frontend' : 'Backend' }}</span>
-            <span>{{ card.level }}</span>
             <span>{{ masteryLabel(card) }}</span>
           </div>
           <p>Priorita {{ cardPriority(card) }}</p>

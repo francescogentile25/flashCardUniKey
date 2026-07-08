@@ -38,6 +38,22 @@ header h1 {
   line-height: 0.95;
 }
 
+.import-link {
+  align-items: center;
+  background: #171d25;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  color: #f8d65b;
+  display: inline-flex;
+  font-size: 0.82rem;
+  font-weight: 900;
+  gap: 0.4rem;
+  margin-top: 0.6rem;
+  padding: 0.5rem 0.85rem;
+  text-decoration: none;
+  width: fit-content;
+}
+
 form,
 .control,
 label,

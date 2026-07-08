@@ -7,6 +7,10 @@
   <header>
     <p>Card studio</p>
     <h1>Gestisci le flash card.</h1>
+    <a class="import-link" routerLink="/import">
+      <i class="pi pi-file-import" aria-hidden="true"></i>
+      Genera da PDF
+    </a>
   </header>
 
   @if (savedMessage()) {
@@ -49,30 +53,6 @@
       }
     </label>
 
-    <div class="control">
-      <span>Area</span>
-      <div class="segmented">
-        <button type="button" [class.active]="state().area === 'frontend'" (click)="setArea('frontend')">
-          Frontend
-        </button>
-        <button type="button" [class.active]="state().area === 'backend'" (click)="setArea('backend')">
-          Backend
-        </button>
-      </div>
-    </div>
-
-    <div class="control">
-      <span>Livello</span>
-      <div class="segmented">
-        <button type="button" [class.active]="state().level === 'junior'" (click)="setLevel('junior')">
-          Junior
-        </button>
-        <button type="button" [class.active]="state().level === 'middle'" (click)="setLevel('middle')">
-          Middle
-        </button>
-      </div>
-    </div>
-
     <button class="submit" type="submit" [disabled]="!cardForm().valid() || saving()">
       @if (saving()) {
         Salvataggio...
@@ -101,10 +81,6 @@
         @for (card of cards(); track card.id) {
           <article class="library-card" [class.editing]="editingId() === card.id">
             <div>
-              <div class="chips">
-                <span>{{ card.area === 'frontend' ? 'FE' : 'BE' }}</span>
-                <span>{{ card.level }}</span>
-              </div>
               <h2>{{ card.question }}</h2>
               <p>{{ card.answer }}</p>
             </div>

@@ -1,0 +1,90 @@
+<section class="import-shell">
+  <a class="back-link" routerLink="/new">
+    <i class="pi pi-arrow-left" aria-hidden="true"></i>
+    Torna al card studio
+  </a>
+
+  <header>
+    <p>Import automatico</p>
+    <h1>Genera domande da un PDF.</h1>
+  </header>
+
+  @if (savedMessage()) {
+    <div class="feedback success">{{ savedMessage() }}</div>
+  }
+  @if (error()) {
+    <div class="feedback error">{{ error() }}</div>
+  }
+
+  <div class="panel">
+    <label class="file-drop">
+      <input type="file" accept="application/pdf" (change)="onFileSelected($event)" />
+      <i class="pi pi-file-pdf" aria-hidden="true"></i>
+      <span>{{ fileName() ?? 'Scegli un PDF (dispense, appunti...)' }}</span>
+    </label>
+
+    @if (extracting()) {
+      <div class="hint">Estrazione del testo in corso...</div>
+    }
+
+    <label class="field">
+      <span>Testo sorgente ({{ charCount() }} caratteri) — puoi modificarlo</span>
+      <textarea
+        rows="8"
+        placeholder="Il testo del PDF appare qui. In alternativa incollalo a mano."
+        [value]="sourceText()"
+        (input)="onTextInput($event)"></textarea>
+    </label>
+
+    <div class="generate-row">
+      <label class="count">
+        <span>Numero domande</span>
+        <input type="number" min="1" max="30" [value]="count()" (input)="onCountInput($event)" />
+      </label>
+      <button type="button" class="primary" [disabled]="!canGenerate()" (click)="generate()">
+        @if (generating()) {
+          Generazione...
+        } @else {
+          <ng-container><i class="pi pi-sparkles" aria-hidden="true"></i> Genera domande</ng-container>
+        }
+      </button>
+    </div>
+  </div>
+
+  @if (drafts().length > 0) {
+    <div class="review-head">
+      <strong>{{ selectedCount() }} / {{ drafts().length }} selezionate</strong>
+      <button type="button" class="primary" [disabled]="saving() || selectedCount() === 0" (click)="save()">
+        @if (saving()) {
+          Salvataggio...
+        } @else {
+          Salva nel deck
+        }
+      </button>
+    </div>
+
+    <div class="draft-list">
+      @for (card of drafts(); track $index) {
+        <article class="draft" [class.excluded]="!card.include">
+          <div class="draft-top">
+            <label class="check">
+              <input type="checkbox" [checked]="card.include" (change)="toggleInclude($index)" />
+              <span>Includi</span>
+            </label>
+            <button type="button" class="link-danger" (click)="removeDraft($index)">
+              <i class="pi pi-trash" aria-hidden="true"></i>
+            </button>
+          </div>
+          <label class="field">
+            <span>Domanda</span>
+            <textarea rows="2" [value]="card.question" (input)="updateDraft($index, 'question', $event)"></textarea>
+          </label>
+          <label class="field">
+            <span>Risposta</span>
+            <textarea rows="4" [value]="card.answer" (input)="updateDraft($index, 'answer', $event)"></textarea>
+          </label>
+        </article>
+      }
+    </div>
+  }
+</section>

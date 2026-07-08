@@ -3,12 +3,7 @@ import { form, FormField, required, submit } from '@angular/forms/signals';
 import { RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { FormState } from '../../../core/utils/simple-form-model.util';
-import {
-  CreateFlashcardRequest,
-  Flashcard,
-  FlashcardArea,
-  FlashcardLevel
-} from '../models/flashcard.model';
+import { CreateFlashcardRequest, Flashcard } from '../models/flashcard.model';
 import { FlashcardsService } from '../services/flashcards.service';
 
 type CardForm = CreateFlashcardRequest;
@@ -33,16 +28,12 @@ export class FlashcardCreate {
 
   protected readonly state = signal<FormState<CardForm>>({
     question: '',
-    answer: '',
-    area: 'frontend',
-    level: 'junior'
+    answer: ''
   });
 
   protected readonly cardForm = form(this.state, (p) => {
     required(p.question, { message: 'Inserisci la domanda' });
     required(p.answer, { message: 'Inserisci la risposta' });
-    required(p.area, { message: 'Scegli FE o BE' });
-    required(p.level, { message: 'Scegli il livello' });
   });
 
   constructor() {
@@ -62,30 +53,19 @@ export class FlashcardCreate {
     }
   }
 
-  protected setArea(area: FlashcardArea): void {
-    this.state.update((value) => ({ ...value, area }));
-  }
-
-  protected setLevel(level: FlashcardLevel): void {
-    this.state.update((value) => ({ ...value, level }));
-  }
-
   protected editCard(card: Flashcard): void {
     this.editingId.set(card.id);
     this.savedMessage.set(undefined);
     this.error.set(undefined);
     this.state.set({
       question: card.question,
-      answer: card.answer,
-      area: card.area,
-      level: card.level
+      answer: card.answer
     });
   }
 
   protected resetForm(): void {
-    const { area, level } = this.state();
     this.editingId.set(null);
-    this.state.set({ question: '', answer: '', area, level });
+    this.state.set({ question: '', answer: '' });
   }
 
   protected async deleteCard(card: Flashcard): Promise<void> {
@@ -141,8 +121,7 @@ export class FlashcardCreate {
           this.cards.update((cards) => [...cards, created]);
         }
 
-        const { area, level } = this.state();
-        this.state.set({ question: '', answer: '', area, level });
+        this.state.set({ question: '', answer: '' });
         this.savedMessage.set('Card salvata.');
       } catch {
         this.error.set('Salvataggio non riuscito. Controlla le policy INSERT/UPDATE su Supabase.');

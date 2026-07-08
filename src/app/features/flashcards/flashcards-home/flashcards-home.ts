@@ -31,7 +31,7 @@ const MODE_CONFIGS: ModeConfig[] = [
   {
     id: 'simulation',
     label: 'Simulazione',
-    caption: 'Misto colloquio FE/BE'
+    caption: 'Tutte le domande in ordine casuale'
   }
 ];
 

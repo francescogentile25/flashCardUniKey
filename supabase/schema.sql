@@ -4,8 +4,6 @@ create table if not exists public.flashcards (
   id uuid primary key default gen_random_uuid(),
   question text not null,
   answer text not null,
-  area text not null check (area in ('frontend', 'backend')),
-  level text not null check (level in ('junior', 'middle')),
   known_count integer not null default 0,
   unknown_count integer not null default 0,
   last_seen_at timestamptz,
@@ -15,6 +13,11 @@ create table if not exists public.flashcards (
   ),
   created_at timestamptz not null default now()
 );
+
+-- Migrazione: rimuove il dominio "colloquio programmazione" (area/level).
+-- Le domande di medicina hanno solo domanda + risposta.
+alter table public.flashcards drop column if exists area;
+alter table public.flashcards drop column if exists level;
 
 alter table public.flashcards
   add column if not exists known_count integer not null default 0,
@@ -54,24 +57,18 @@ create policy flashcards_delete_public
   to anon, authenticated
   using (true);
 
-insert into public.flashcards (question, answer, area, level)
+insert into public.flashcards (question, answer)
 values
   (
-    'Qual e la differenza tra let, const e var in JavaScript?',
-    'var ha function scope ed e soggetta a hoisting piu permissivo. let e const hanno block scope; const impedisce la riassegnazione del binding, ma non rende immutabile un oggetto.',
-    'frontend',
-    'junior'
+    'Quali sono i quattro foglietti della parete del cuore dall''interno all''esterno?',
+    'Endocardio (riveste le cavita), miocardio (muscolo cardiaco), epicardio (pericardio viscerale) e pericardio parietale con la cavita pericardica interposta.'
   ),
   (
-    'Quando useresti un indice su una tabella SQL?',
-    'Un indice velocizza filtri, join e ordinamenti su colonne lette spesso. Va bilanciato perche occupa spazio e rallenta scritture come insert, update e delete.',
-    'backend',
-    'junior'
+    'Che cosa misura la clearance della creatinina?',
+    'Stima il filtrato glomerulare (GFR): il volume di plasma depurato dalla creatinina nell''unita di tempo. La creatinina viene filtrata e quasi non riassorbita, quindi approssima bene il GFR.'
   ),
   (
-    'Come funziona la change detection OnPush in Angular?',
-    'OnPush riduce i controlli del componente: aggiorna la vista quando cambiano input per riferimento, partono eventi nel componente, observable usati con async pipe emettono, oppure un signal letto dal template cambia.',
-    'frontend',
-    'middle'
+    'Qual e il meccanismo d''azione delle penicilline?',
+    'Inibiscono la transpeptidasi (PBP) bloccando la sintesi del peptidoglicano della parete batterica; sono battericide sui batteri in fase di crescita attiva.'
   )
 on conflict do nothing;

@@ -18,6 +18,11 @@ export const layoutRoutes: Routes = [
           .then(c => c.FlashcardCreate)
       },
       {
+        path: 'import',
+        loadComponent: () => import('./../flashcards/flashcard-import/flashcard-import')
+          .then(c => c.FlashcardImport)
+      },
+      {
         path: 'login',
         canActivate: [loginGuard],
         loadComponent: () => import('./../auth/login/login')

@@ -8,12 +8,15 @@ import {
   UpdateFlashcardReviewRequest
 } from '../models/flashcard.model';
 
+export type GeneratedCard = CreateFlashcardRequest;
+
 @Injectable({
   providedIn: 'root'
 })
 export class FlashcardsService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = `${environment.supabase.url}/rest/v1/flashcards`;
+  private readonly functionsUrl = `${environment.supabase.url}/functions/v1/generate-flashcards`;
   private readonly headers = new HttpHeaders({
     apikey: environment.supabase.publishableKey,
     Authorization: `Bearer ${environment.supabase.publishableKey}`,
@@ -30,6 +33,20 @@ export class FlashcardsService {
     return this.http.post<Flashcard[]>(this.baseUrl, request, {
       headers: this.headers
     });
+  }
+
+  createMany(requests: CreateFlashcardRequest[]): Observable<Flashcard[]> {
+    return this.http.post<Flashcard[]>(this.baseUrl, requests, {
+      headers: this.headers
+    });
+  }
+
+  generateFromText(text: string, count: number): Observable<{ cards: GeneratedCard[] }> {
+    return this.http.post<{ cards: GeneratedCard[] }>(
+      this.functionsUrl,
+      { text, count },
+      { headers: this.headers }
+    );
   }
 
   updateDetails(id: string, request: CreateFlashcardRequest): Observable<Flashcard[]> {
