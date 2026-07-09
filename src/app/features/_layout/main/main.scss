@@ -7,6 +7,16 @@
 .app-main {
   min-height: 100dvh;
   padding-bottom: 78px;
+  /* La card che vola via (translateX 130%) allargherebbe il layout: su iOS il
+     pan orizzontale di pagina ruberebbe il gesto di swipe. Qui l'altezza e
+     auto, quindi ritaglia solo in orizzontale e la pagina scrolla normale. */
+  overflow-x: clip;
+}
+
+@supports not (overflow-x: clip) {
+  .app-main {
+    overflow-x: hidden;
+  }
 }
 
 @media (min-width: 760px) {
