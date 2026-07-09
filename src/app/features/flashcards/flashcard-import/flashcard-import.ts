@@ -2,8 +2,14 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { CreateFlashcardRequest } from '../models/flashcard.model';
-import { FlashcardsService } from '../services/flashcards.service';
+import { FlashcardsService, GeneratedCard } from '../services/flashcards.service';
+import { allocateCounts, chunkText } from '../utils/chunk-text.util';
 import { extractPdfText } from '../utils/pdf-text.util';
+
+const RATE_LIMIT_BACKOFF_MS = 25_000;
+const MAX_ATTEMPTS_PER_CHUNK = 3;
+
+const delay = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
 type DraftCard = CreateFlashcardRequest & { include: boolean };
 
@@ -26,6 +32,15 @@ export class FlashcardImport {
   protected readonly saving = signal(false);
   protected readonly error = signal<string | undefined>(undefined);
   protected readonly savedMessage = signal<string | undefined>(undefined);
+  protected readonly progress = signal<{ done: number; total: number } | undefined>(undefined);
+
+  protected readonly progressLabel = computed(() => {
+    const p = this.progress();
+    if (!p || p.total <= 1) {
+      return undefined;
+    }
+    return `Blocco ${Math.min(p.done + 1, p.total)} di ${p.total} — testo lungo, può servire qualche minuto.`;
+  });
 
   protected readonly charCount = computed(() => this.sourceText().length);
   protected readonly selectedCount = computed(
@@ -52,7 +67,8 @@ export class FlashcardImport {
       if (text.length < 40) {
         this.error.set('Il PDF non contiene testo estraibile (forse e scansionato come immagine).');
       }
-    } catch {
+    } catch (e) {
+      console.error('Estrazione PDF fallita', e);
       this.error.set('Non riesco a leggere il PDF. Prova con un altro file.');
     } finally {
       this.extracting.set(false);
@@ -79,24 +95,84 @@ export class FlashcardImport {
     this.savedMessage.set(undefined);
     this.drafts.set([]);
 
-    try {
-      const { cards } = await firstValueFrom(
-        this.flashcardsService.generateFromText(this.sourceText(), this.count())
-      );
+    // Testi lunghi: spezzati in blocchi, le card richieste vengono distribuite sui blocchi.
+    const chunks = chunkText(this.sourceText());
+    const counts = allocateCounts(
+      chunks.map((chunk) => chunk.length),
+      this.count()
+    );
+    const jobs = chunks
+      .map((chunk, i) => ({ chunk, count: counts[i] }))
+      .filter((job) => job.count > 0);
 
-      if (!cards?.length) {
-        this.error.set('Gemini non ha prodotto domande. Riprova o accorcia il testo.');
+    this.progress.set({ done: 0, total: jobs.length });
+
+    const collected: GeneratedCard[] = [];
+    let failedChunks = 0;
+
+    try {
+      for (const job of jobs) {
+        const cards = await this.generateChunk(job.chunk, job.count);
+        if (cards) {
+          collected.push(...cards);
+        } else {
+          failedChunks++;
+          if (collected.length === 0 && failedChunks >= 2) {
+            break; // niente funziona: inutile continuare a martellare la funzione
+          }
+        }
+        this.progress.update((p) => p && { ...p, done: p.done + 1 });
+      }
+
+      const unique = this.dedupeCards(collected);
+      if (unique.length === 0) {
+        this.error.set(
+          'Generazione non riuscita. Verifica che la Edge Function sia deployata e GROQ_API_KEY configurata.'
+        );
         return;
       }
 
-      this.drafts.set(cards.map((card) => ({ ...card, include: true })));
-    } catch {
-      this.error.set(
-        'Generazione non riuscita. Verifica che la Edge Function sia deployata e GEMINI_API_KEY configurata.'
-      );
+      this.drafts.set(unique.map((card) => ({ ...card, include: true })));
+      if (failedChunks > 0) {
+        this.error.set(
+          `${failedChunks} blocchi su ${jobs.length} non generati (probabile rate limit). Prodotte ${unique.length} card.`
+        );
+      }
     } finally {
       this.generating.set(false);
+      this.progress.set(undefined);
     }
+  }
+
+  /** Una chiamata per blocco, con retry e backoff quando Groq risponde 429. */
+  private async generateChunk(chunk: string, count: number): Promise<GeneratedCard[] | undefined> {
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS_PER_CHUNK; attempt++) {
+      try {
+        const { cards } = await firstValueFrom(this.flashcardsService.generateFromText(chunk, count));
+        return cards ?? [];
+      } catch (e) {
+        console.error(`Generazione blocco fallita (tentativo ${attempt})`, e);
+        const detail = String((e as { error?: { error?: string } })?.error?.error ?? '');
+        const rateLimited = /429|rate.?limit/i.test(detail);
+        if (!rateLimited || attempt === MAX_ATTEMPTS_PER_CHUNK) {
+          return undefined;
+        }
+        await delay(RATE_LIMIT_BACKOFF_MS);
+      }
+    }
+    return undefined;
+  }
+
+  private dedupeCards(cards: GeneratedCard[]): GeneratedCard[] {
+    const seen = new Set<string>();
+    return cards.filter((card) => {
+      const key = card.question.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
+      if (seen.has(key)) {
+        return false;
+      }
+      seen.add(key);
+      return true;
+    });
   }
 
   protected toggleInclude(index: number): void {

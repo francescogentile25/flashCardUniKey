@@ -49,6 +49,10 @@
         }
       </button>
     </div>
+
+    @if (progressLabel(); as label) {
+      <div class="hint">{{ label }}</div>
+    }
   </div>
 
   @if (drafts().length > 0) {

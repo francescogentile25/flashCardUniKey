@@ -1,0 +1,31 @@
+# Verify — FlashCardUniKey
+
+Ricetta per verificare modifiche runtime nell'app Angular (SPA, nessun backend locale: Supabase remoto).
+
+## Build & serve
+
+```powershell
+npx ng build --configuration development   # build rapida, output in dist/FlashCardUniKey.FE/browser
+npx ng serve --port 4237                   # dev server (background)
+```
+
+## Drive della UI (headless, senza estensione Chrome)
+
+Chrome installato in `C:\Program Files\Google\Chrome\Application\chrome.exe`.
+Nello scratchpad: `npm i puppeteer-core`, poi script con `puppeteer.launch({ executablePath, headless: 'new' })`.
+
+- Upload PDF: `input[type=file]` + `elementHandle.uploadFile(path)` — niente click sul picker nativo.
+- Attesa estrazione: `page.waitForFunction` su `textarea.value.length` o messaggio d'errore nel DOM.
+- Cattura: `page.on('response')` per asset (es. worker pdfjs), `page.on('console'/'pageerror')` per errori.
+
+## Rotte utili
+
+- `/` deck, `/import` import PDF (senza guard), `/manage` gestione card, `/login` (loginGuard).
+- PDF di prova reale nella root del repo (`a1.5 Dispense di MMSC VI...pdf`, 164 pagine).
+
+## Gotcha
+
+- Il builder Angular NON risolve `new URL(..., import.meta.url)`: asset tipo pdf.worker vanno copiati via `assets` in angular.json e referenziati con URL runtime. Verifica presenza in `dist/FlashCardUniKey.FE/browser` dopo build.
+- Generazione flashcard verificabile LIVE anche da localhost: la Edge Function `generate-flashcards` è deployata e l'URL Supabase in `environment.development.ts` è reale. Incollare testo nel textarea via `evaluate` + `dispatchEvent(new Event('input', {bubbles:true}))` (50k chars = 3 blocchi). Consuma quota Groq free tier — tenere i test piccoli e NON cliccare "Salva nel deck" (scrive su DB).
+- Groq free tier llama-3.3-70b: TPM limit basso, i 429 sono normali con blocchi da 20k chars — il client fa retry con backoff 25s, un run da 3 blocchi dura ~1-2 min.
+- CORS Edge Function: consente solo `authorization, x-client-info, apikey, content-type` — mai aggiungere altri header (es. `Prefer`) alla chiamata functions.
