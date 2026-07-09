@@ -50,6 +50,19 @@ html {
   scroll-behavior: smooth;
 }
 
+/* La card che vola via (translateX 130%) allargherebbe il layout: su iOS
+   lo scroll orizzontale di pagina ruberebbe il gesto di swipe. */
+html, body {
+  overflow-x: clip;
+  overscroll-behavior-x: none;
+}
+
+@supports not (overflow-x: clip) {
+  html, body {
+    overflow-x: hidden;
+  }
+}
+
 body {
   background: var(--cotenna);
   color: var(--grugno);
