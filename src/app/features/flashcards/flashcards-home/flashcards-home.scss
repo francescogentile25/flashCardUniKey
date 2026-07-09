@@ -178,6 +178,11 @@
   color: var(--referto);
 }
 
+.progress-area {
+  padding-top: 1.1rem;
+  position: relative;
+}
+
 .progress-track {
   background: var(--carta);
   border: 1px solid var(--linea);
@@ -192,6 +197,16 @@
   display: block;
   height: 100%;
   transition: width 260ms ease;
+}
+
+.pig-runner {
+  font-size: 1.05rem;
+  line-height: 1;
+  position: absolute;
+  top: 0;
+  /* guarda nella direzione di marcia */
+  transform: translateX(-50%) scaleX(-1);
+  transition: left 260ms ease;
 }
 
 .deck-zone {
@@ -210,6 +225,34 @@
   transform-style: preserve-3d;
   user-select: none;
   width: 100%;
+}
+
+/* Orecchie: la card e il maiale. Spuntano dal bordo alto e seguono ogni gesto. */
+.card-ears {
+  inset: 0;
+  pointer-events: none;
+  position: absolute;
+}
+
+.card-ears::before,
+.card-ears::after {
+  background: var(--rosa);
+  border-radius: 62% 62% 46% 46%;
+  content: '';
+  height: 46px;
+  position: absolute;
+  top: -13px;
+  width: 44px;
+}
+
+.card-ears::before {
+  left: 24px;
+  transform: rotate(-16deg);
+}
+
+.card-ears::after {
+  right: 24px;
+  transform: rotate(16deg);
 }
 
 /* Sotto il dito: nessuna transizione, la card segue 1:1. */
@@ -252,6 +295,8 @@
   justify-content: space-between;
   padding: 1.15rem;
   position: absolute;
+  /* +1px sull'asse Z: nel contesto 3D del flip le facce coprono le orecchie (z=0) */
+  transform: translateZ(1px);
   transition: transform 220ms ease, box-shadow 160ms ease;
 }
 
@@ -265,15 +310,15 @@
 }
 
 .back {
-  transform: rotateY(180deg);
+  transform: rotateY(180deg) translateZ(1px);
 }
 
 .study-card.is-flipped .front {
-  transform: rotateY(180deg);
+  transform: rotateY(180deg) translateZ(1px);
 }
 
 .study-card.is-flipped .back {
-  transform: rotateY(360deg);
+  transform: rotateY(360deg) translateZ(1px);
 }
 
 .chips {
@@ -309,6 +354,18 @@
   line-height: 1.55;
   margin: 0;
   overflow-y: auto;
+}
+
+.watermark {
+  bottom: 4.6rem;
+  color: var(--grugno);
+  height: 96px;
+  opacity: 0.08;
+  pointer-events: none;
+  position: absolute;
+  right: 0.9rem;
+  transform: rotate(-9deg);
+  width: 96px;
 }
 
 /* Timbro da cartella clinica: il feedback dello swipe. */
@@ -420,6 +477,12 @@
   font-family: var(--font-display);
   font-size: 1.4rem;
   font-weight: 600;
+}
+
+.empty-pig {
+  font-size: 2.6rem;
+  line-height: 1;
+  transform: scaleX(-1);
 }
 
 .empty-state a,

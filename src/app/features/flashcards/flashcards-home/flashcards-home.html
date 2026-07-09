@@ -52,8 +52,12 @@
     </span>
   </div>
 
-  <div class="progress-track" aria-label="Avanzamento">
-    <span [style.width.%]="progress()"></span>
+  <div class="progress-area" aria-label="Avanzamento">
+    <div class="progress-track">
+      <span [style.width.%]="progress()"></span>
+    </div>
+    <!-- il porcellino trotterella verso fine sessione -->
+    <span class="pig-runner" [style.left]="pigPosition()" aria-hidden="true">🐖</span>
   </div>
 
   @if (loading()) {
@@ -78,6 +82,8 @@
         (pointermove)="onPointerMove($event)"
         (pointerup)="onPointerUp()"
         (pointercancel)="onPointerUp()">
+        <!-- primo figlio: dipinto prima delle facce, quindi le orecchie restano dietro -->
+        <div class="card-ears" aria-hidden="true"></div>
         <div class="face front">
           <div class="chips">
             <span>{{ masteryLabel(card) }}</span>
@@ -101,6 +107,12 @@
             <span>{{ card.unknown_count }} no</span>
           </div>
           <p class="answer-text">{{ card.answer }}</p>
+          <!-- filigrana grugno, come il timbro a secco di un referto -->
+          <svg class="watermark" viewBox="0 0 40 40" aria-hidden="true" focusable="false">
+            <ellipse cx="20" cy="20" rx="17" ry="13" fill="none" stroke="currentColor" stroke-width="3" />
+            <circle cx="13.5" cy="20" r="3" fill="currentColor" />
+            <circle cx="26.5" cy="20" r="3" fill="currentColor" />
+          </svg>
           <button
             class="ghost-button"
             type="button"
@@ -151,6 +163,7 @@
     </div>
   } @else {
     <div class="empty-state">
+      <span class="empty-pig" aria-hidden="true">🐖</span>
       <strong>Tutto grufolato per oggi.</strong>
       <span>Cambia modalità o ricarica il deck.</span>
       <button type="button" (click)="loadCards()">Ricarica</button>

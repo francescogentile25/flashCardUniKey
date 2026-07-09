@@ -133,6 +133,11 @@ export class FlashcardsHome {
     return Math.round(((this.knownCount() + this.unknownCount()) / total) * 100);
   });
 
+  /** Il porcellino resta dentro la barra anche a 0% e 100%. */
+  protected readonly pigPosition = computed(
+    () => `clamp(0.7rem, ${this.progress()}%, calc(100% - 0.7rem))`
+  );
+
   constructor() {
     void this.loadCards();
   }
