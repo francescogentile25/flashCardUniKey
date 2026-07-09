@@ -26,6 +26,24 @@ alter table public.flashcards
   add column if not exists next_review_at timestamptz not null default now(),
   add column if not exists mastery_level text not null default 'new';
 
+-- Materia di appartenenza: senza, un deck da centinaia di card e un mucchio unico.
+alter table public.flashcards
+  add column if not exists subject text not null default 'Generale';
+
+-- Provenienza: da quale PDF viene la card e con quale paragrafo di contesto.
+alter table public.flashcards
+  add column if not exists source_file text,
+  add column if not exists source_excerpt text;
+
+-- Stato SM-2. interval_days e in giorni frazionari (le card sbagliate tornano in minuti).
+alter table public.flashcards
+  add column if not exists ease_factor real not null default 2.5,
+  add column if not exists interval_days real not null default 0,
+  add column if not exists repetitions integer not null default 0;
+
+create index if not exists flashcards_subject_idx on public.flashcards (subject);
+create index if not exists flashcards_next_review_idx on public.flashcards (next_review_at);
+
 alter table public.flashcards enable row level security;
 
 drop policy if exists flashcards_select_public on public.flashcards;
@@ -56,6 +74,36 @@ create policy flashcards_delete_public
   for delete
   to anon, authenticated
   using (true);
+
+-- Storico dei ripassi: una riga per swipe. Append-only, alimenta streak,
+-- grafico giornaliero e classifica delle domande piu sbagliate.
+create table if not exists public.review_log (
+  id uuid primary key default gen_random_uuid(),
+  flashcard_id uuid not null references public.flashcards (id) on delete cascade,
+  outcome text not null check (outcome in ('known', 'unknown')),
+  subject text not null default 'Generale',
+  source text not null default 'deck' check (source in ('deck', 'quiz')),
+  reviewed_at timestamptz not null default now()
+);
+
+create index if not exists review_log_reviewed_at_idx on public.review_log (reviewed_at desc);
+create index if not exists review_log_flashcard_idx on public.review_log (flashcard_id);
+
+alter table public.review_log enable row level security;
+
+drop policy if exists review_log_select_public on public.review_log;
+create policy review_log_select_public
+  on public.review_log
+  for select
+  to anon, authenticated
+  using (true);
+
+drop policy if exists review_log_insert_public on public.review_log;
+create policy review_log_insert_public
+  on public.review_log
+  for insert
+  to anon, authenticated
+  with check (true);
 
 insert into public.flashcards (question, answer)
 values

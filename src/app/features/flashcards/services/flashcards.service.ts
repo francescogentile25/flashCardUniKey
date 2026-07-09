@@ -1,14 +1,16 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { map, Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import {
   CreateFlashcardRequest,
+  DEFAULT_SUBJECT,
   Flashcard,
+  UpdateFlashcardRequest,
   UpdateFlashcardReviewRequest
 } from '../models/flashcard.model';
 
-export type GeneratedCard = CreateFlashcardRequest;
+export type GeneratedCard = { question: string; answer: string };
 
 @Injectable({
   providedIn: 'root'
@@ -30,9 +32,11 @@ export class FlashcardsService {
   });
 
   getAll(): Observable<Flashcard[]> {
-    return this.http.get<Flashcard[]>(`${this.baseUrl}?select=*&order=created_at.asc`, {
-      headers: this.headers
-    });
+    return this.http
+      .get<Flashcard[]>(`${this.baseUrl}?select=*&order=created_at.asc`, {
+        headers: this.headers
+      })
+      .pipe(map((cards) => cards.map((card) => this.normalize(card))));
   }
 
   create(request: CreateFlashcardRequest): Observable<Flashcard[]> {
@@ -55,7 +59,7 @@ export class FlashcardsService {
     );
   }
 
-  updateDetails(id: string, request: CreateFlashcardRequest): Observable<Flashcard[]> {
+  updateDetails(id: string, request: UpdateFlashcardRequest): Observable<Flashcard[]> {
     return this.http.patch<Flashcard[]>(`${this.baseUrl}?id=eq.${id}`, request, {
       headers: this.headers
     });
@@ -71,5 +75,23 @@ export class FlashcardsService {
     return this.http.delete<Flashcard[]>(`${this.baseUrl}?id=eq.${id}`, {
       headers: this.headers
     });
+  }
+
+  /** Riempie i default per le righe create prima della migrazione delle colonne. */
+  private normalize(card: Flashcard): Flashcard {
+    return {
+      ...card,
+      subject: card.subject?.trim() || DEFAULT_SUBJECT,
+      source_file: card.source_file ?? null,
+      source_excerpt: card.source_excerpt ?? null,
+      known_count: card.known_count ?? 0,
+      unknown_count: card.unknown_count ?? 0,
+      last_seen_at: card.last_seen_at ?? null,
+      next_review_at: card.next_review_at ?? new Date().toISOString(),
+      mastery_level: card.mastery_level ?? 'new',
+      ease_factor: card.ease_factor ?? 2.5,
+      interval_days: card.interval_days ?? 0,
+      repetitions: card.repetitions ?? 0
+    };
   }
 }
