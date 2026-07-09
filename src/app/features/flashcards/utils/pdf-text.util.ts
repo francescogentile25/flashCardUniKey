@@ -1,10 +1,8 @@
 import * as pdfjs from 'pdfjs-dist';
 
-// Il worker viene bundlato da esbuild come asset separato (import.meta.url).
-pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-  'pdfjs-dist/build/pdf.worker.min.mjs',
-  import.meta.url
-).toString();
+// Il builder Angular (esbuild) non risolve `new URL(..., import.meta.url)`:
+// il worker viene copiato in root output via `assets` in angular.json.
+pdfjs.GlobalWorkerOptions.workerSrc = new URL('pdf.worker.min.mjs', document.baseURI).toString();
 
 /** Estrae il testo da un PDF interamente lato client (nessun upload al server). */
 export async function extractPdfText(file: File): Promise<string> {
