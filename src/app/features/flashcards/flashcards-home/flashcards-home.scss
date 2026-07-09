@@ -3,7 +3,7 @@
 }
 
 .trainer-shell {
-  color: #f7f2e8;
+  color: var(--grugno);
   display: grid;
   gap: 1rem;
   margin: 0 auto;
@@ -18,52 +18,70 @@
 }
 
 .hero p {
-  color: #f8d65b;
-  font-size: 0.76rem;
-  font-weight: 900;
+  color: var(--referto);
+  font-family: var(--font-data);
+  font-size: 0.74rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
 }
 
 .hero h1 {
-  font-size: clamp(2.2rem, 12vw, 4.9rem);
-  line-height: 0.92;
+  font-family: var(--font-display);
+  font-size: clamp(2.1rem, 10vw, 4.2rem);
+  font-weight: 600;
+  line-height: 1;
+}
+
+.ecg-tail {
+  color: var(--rosa);
+  display: block;
+  height: 34px;
+  margin-top: 0.3rem;
+  width: min(240px, 70%);
 }
 
 .hero-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 0.55rem;
-  margin-top: 0.85rem;
+  margin-top: 0.7rem;
 }
 
 .hero-actions a {
   align-items: center;
-  background: #171d25;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: var(--carta);
+  border: 1px solid var(--linea);
   border-radius: 999px;
-  color: #f8d65b;
+  color: var(--grugno);
   display: inline-flex;
   font-size: 0.82rem;
-  font-weight: 900;
+  font-weight: 800;
   gap: 0.4rem;
   padding: 0.5rem 0.85rem;
   text-decoration: none;
+  transition: border-color 140ms ease, background 140ms ease;
+}
+
+.hero-actions a:hover {
+  background: var(--rosa-tenue);
+  border-color: var(--rosa);
 }
 
 .notice,
 .empty-state,
 .score-strip,
-.study-card,
 .mode-tabs button {
-  border: 1px solid rgba(255, 255, 255, 0.09);
-  border-radius: 8px;
+  border: 1px solid var(--linea);
+  border-radius: 16px;
 }
 
 .notice {
   align-items: center;
-  background: #3b1518;
-  color: #ffd9dc;
+  background: var(--referto-tenue);
+  color: var(--referto);
   display: flex;
+  font-weight: 700;
   gap: 0.65rem;
   padding: 0.85rem;
 }
@@ -71,25 +89,35 @@
 .mode-tabs {
   display: grid;
   gap: 0.55rem;
-  grid-template-columns: 1fr;
+  grid-template-columns: repeat(3, 1fr);
 }
 
 .mode-tabs button {
-  background: #171d25;
-  color: #aeb7c6;
+  background: var(--carta);
+  color: var(--grugno-tenue);
+  cursor: pointer;
   display: grid;
   gap: 0.15rem;
-  padding: 0.78rem;
-  text-align: left;
+  padding: 0.78rem 0.5rem;
+  text-align: center;
+  transition: background 140ms ease, color 140ms ease, border-color 140ms ease;
+}
+
+/* Su mobile le caption sparirebbero comunque sotto il dito: solo etichette, la card resta sopra il fold. */
+.mode-tabs button span {
+  display: none;
 }
 
 .mode-tabs button.active {
-  background: #f8d65b;
-  color: #14171f;
+  background: var(--grugno);
+  border-color: var(--grugno);
+  color: var(--cotenna);
 }
 
 .mode-tabs strong {
+  font-family: var(--font-display);
   font-size: 1rem;
+  font-weight: 500;
 }
 
 .mode-tabs span,
@@ -98,7 +126,7 @@
 }
 
 .score-strip {
-  background: #171d25;
+  background: var(--carta);
   display: grid;
   gap: 0.5rem;
   grid-template-columns: repeat(3, 1fr);
@@ -106,33 +134,64 @@
 }
 
 .score-strip span {
-  color: #aeb7c6;
+  color: var(--grugno-tenue);
+  font-family: var(--font-data);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
   text-align: center;
+  text-transform: uppercase;
 }
 
 .score-strip strong {
-  color: #f7f2e8;
+  color: var(--grugno);
   display: block;
-  font-size: 1.15rem;
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  font-weight: 600;
 }
 
 .session-line {
-  color: #aeb7c6;
+  align-items: baseline;
+  color: var(--grugno-tenue);
   display: flex;
+  font-family: var(--font-data);
+  font-size: 0.78rem;
   justify-content: space-between;
 }
 
+.session-tally {
+  align-items: baseline;
+  display: inline-flex;
+  gap: 0.7rem;
+}
+
+.session-tally em {
+  font-style: normal;
+  font-weight: 700;
+}
+
+.session-tally .ok {
+  color: var(--camice);
+}
+
+.session-tally .ko {
+  color: var(--referto);
+}
+
 .progress-track {
-  background: #202832;
+  background: var(--carta);
+  border: 1px solid var(--linea);
   border-radius: 999px;
-  height: 7px;
+  height: 9px;
   overflow: hidden;
 }
 
 .progress-track span {
-  background: #f8d65b;
+  background: var(--rosa);
+  border-radius: 999px;
   display: block;
   height: 100%;
+  transition: width 260ms ease;
 }
 
 .deck-zone {
@@ -147,37 +206,65 @@
   min-height: 370px;
   position: relative;
   touch-action: pan-y;
-  transition: transform 160ms ease;
+  transition: transform 200ms ease, opacity 200ms ease;
   transform-style: preserve-3d;
   user-select: none;
   width: 100%;
 }
 
+/* Sotto il dito: nessuna transizione, la card segue 1:1. */
+.study-card.is-dragging {
+  transition: none;
+}
+
+/* Swipe confermato: la card vola via, decisa. */
+.study-card.is-exiting {
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 300ms cubic-bezier(0.5, 0, 0.75, 0.4), opacity 300ms ease-out;
+}
+
+.study-card.is-dealing {
+  animation: deal-in 240ms ease-out;
+}
+
+@keyframes deal-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 .face {
   backface-visibility: hidden;
-  border-radius: 8px;
+  background: var(--carta);
+  border: 1px solid var(--linea);
+  border-radius: 20px;
+  box-shadow: var(--ombra);
   display: flex;
   flex-direction: column;
+  gap: 0.8rem;
   inset: 0;
   justify-content: space-between;
-  padding: 1.1rem;
+  padding: 1.15rem;
   position: absolute;
-  transition: transform 220ms ease;
+  transition: transform 220ms ease, box-shadow 160ms ease;
 }
 
-.frontend .face {
-  background: #d9fff6;
-  color: #06241f;
+/* La card "pende" verso l'esito: bordo che anticipa il timbro. */
+.study-card.leans-known .face {
+  box-shadow: 0 0 0 3px var(--camice-tenue), var(--ombra);
 }
 
-.backend .face {
-  background: #ffe7bf;
-  color: #2b1906;
+.study-card.leans-unknown .face {
+  box-shadow: 0 0 0 3px var(--referto-tenue), var(--ombra);
 }
 
 .back {
-  background: #f7f2e8;
-  color: #171d25;
   transform: rotateY(180deg);
 }
 
@@ -196,29 +283,75 @@
 }
 
 .chips span {
-  background: rgba(14, 18, 23, 0.1);
+  background: var(--rosa-tenue);
   border-radius: 999px;
-  font-size: 0.75rem;
-  font-weight: 900;
+  color: var(--grugno);
+  font-family: var(--font-data);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
   padding: 0.34rem 0.58rem;
   text-transform: uppercase;
 }
 
-.face p {
-  font-weight: 800;
-  line-height: 1.48;
-  margin: 0;
-}
-
-.front p {
-  opacity: 0.7;
-  text-transform: uppercase;
-}
-
 .face h2 {
-  font-size: clamp(1.65rem, 8vw, 3.1rem);
-  line-height: 1.02;
+  font-family: var(--font-display);
+  font-size: clamp(1.4rem, 6vw, 2.3rem);
+  font-weight: 500;
+  line-height: 1.12;
   margin: 0;
+  overflow-y: auto;
+}
+
+.answer-text {
+  font-size: 1.02rem;
+  font-weight: 600;
+  line-height: 1.55;
+  margin: 0;
+  overflow-y: auto;
+}
+
+/* Timbro da cartella clinica: il feedback dello swipe. */
+.stamp {
+  border: 4px double currentColor;
+  border-radius: 10px;
+  font-family: var(--font-data);
+  font-size: 1.5rem;
+  font-weight: 700;
+  left: 50%;
+  letter-spacing: 0.12em;
+  opacity: 0;
+  padding: 0.5rem 1.1rem;
+  pointer-events: none;
+  position: absolute;
+  text-transform: uppercase;
+  top: 34%;
+  white-space: nowrap;
+  z-index: 5;
+}
+
+.stamp-known {
+  background: rgba(217, 239, 228, 0.92);
+  color: var(--camice);
+  transform: translateX(-50%) rotate(-11deg);
+}
+
+.stamp-unknown {
+  background: rgba(249, 221, 215, 0.92);
+  color: var(--referto);
+  transform: translateX(-50%) rotate(11deg);
+}
+
+.stamp.armed {
+  transition: transform 120ms ease;
+}
+
+.stamp-known.armed {
+  transform: translateX(-50%) rotate(-11deg) scale(1.12);
+}
+
+.stamp-unknown.armed {
+  transform: translateX(-50%) rotate(11deg) scale(1.12);
 }
 
 .ghost-button,
@@ -227,9 +360,10 @@
 .empty-state a {
   align-items: center;
   border: 0;
-  border-radius: 8px;
+  border-radius: 14px;
+  cursor: pointer;
   display: inline-flex;
-  font-weight: 900;
+  font-weight: 800;
   gap: 0.5rem;
   justify-content: center;
   min-height: 48px;
@@ -238,12 +372,12 @@
 }
 
 .ghost-button {
-  background: rgba(14, 18, 23, 0.12);
-  color: inherit;
+  background: var(--cotenna);
+  color: var(--grugno);
 }
 
 .swipe-hint {
-  color: #aeb7c6;
+  color: var(--grugno-tenue);
   display: grid;
   font-size: 0.82rem;
   gap: 0.35rem;
@@ -258,22 +392,22 @@
 }
 
 .answer.known {
-  background: #c6f6d5;
-  color: #14532d;
+  background: var(--camice);
+  color: #ffffff;
 }
 
 .answer.unknown {
-  background: #fecaca;
-  color: #7f1d1d;
+  background: var(--referto);
+  color: #ffffff;
 }
 
 .answer:disabled {
-  opacity: 0.64;
+  opacity: 0.6;
 }
 
 .empty-state {
-  background: #171d25;
-  color: #aeb7c6;
+  background: var(--carta);
+  color: var(--grugno-tenue);
   display: grid;
   gap: 0.8rem;
   min-height: 260px;
@@ -282,14 +416,16 @@
 }
 
 .empty-state strong {
-  color: #f7f2e8;
-  font-size: 1.25rem;
+  color: var(--grugno);
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  font-weight: 600;
 }
 
 .empty-state a,
 .empty-state button {
-  background: #f8d65b;
-  color: #14171f;
+  background: var(--rosa);
+  color: var(--grugno);
 }
 
 @media (min-width: 760px) {
@@ -297,8 +433,13 @@
     padding: 2rem 1.5rem 2.6rem;
   }
 
-  .mode-tabs {
-    grid-template-columns: repeat(3, 1fr);
+  .mode-tabs button {
+    padding: 0.78rem;
+    text-align: left;
+  }
+
+  .mode-tabs button span {
+    display: block;
   }
 
   .swipe-hint {

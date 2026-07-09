@@ -17,6 +17,13 @@ type ModeConfig = {
   caption: string;
 };
 
+// Soglia oltre la quale il rilascio conferma lo swipe; sotto, la card rientra elastica.
+const SWIPE_THRESHOLD = 64;
+const SWIPE_CLAMP = 140;
+const EXIT_ANIMATION_MS = 300;
+
+const delay = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+
 const MODE_CONFIGS: ModeConfig[] = [
   {
     id: 'today',
@@ -56,7 +63,50 @@ export class FlashcardsHome {
   protected readonly isAnswerVisible = signal(false);
   protected readonly dragOffset = signal(0);
   protected readonly isDragging = signal(false);
+  protected readonly exiting = signal<SwipeOutcome | null>(null);
+  protected readonly dealing = signal(false);
   private readonly dragStartX = signal(0);
+
+  /** Quanto manca alla conferma dello swipe: 0 = fermo, 1 = soglia raggiunta. */
+  protected readonly dragProgress = computed(() =>
+    Math.min(1, Math.abs(this.dragOffset()) / SWIPE_THRESHOLD)
+  );
+
+  /** Esito verso cui punta il gesto in corso (o l'uscita in corso). */
+  protected readonly dragOutcome = computed<SwipeOutcome | null>(() => {
+    const exiting = this.exiting();
+    if (exiting) {
+      return exiting;
+    }
+    const offset = this.dragOffset();
+    if (offset <= -10) {
+      return 'known';
+    }
+    if (offset >= 10) {
+      return 'unknown';
+    }
+    return null;
+  });
+
+  /** Timbro armato: rilasciando ora lo swipe viene confermato. */
+  protected readonly armed = computed(() => this.isDragging() && this.dragProgress() >= 1);
+
+  protected readonly cardTransform = computed(() => {
+    const exiting = this.exiting();
+    if (exiting) {
+      const direction = exiting === 'known' ? -1 : 1;
+      return `translateX(${direction * 130}%) rotate(${direction * 16}deg)`;
+    }
+    const offset = this.dragOffset();
+    return `translateX(${offset}px) rotate(${offset / 22}deg)`;
+  });
+
+  protected stampOpacity(outcome: SwipeOutcome): number {
+    if (this.exiting() === outcome) {
+      return 1;
+    }
+    return this.dragOutcome() === outcome ? this.dragProgress() : 0;
+  }
 
   protected readonly currentCard = computed(() => this.queue()[0] ?? null);
   protected readonly remainingCount = computed(() => this.queue().length);
@@ -123,15 +173,15 @@ export class FlashcardsHome {
   }
 
   protected markKnown(): void {
-    void this.handleSwipe('known');
+    void this.commitSwipe('known');
   }
 
   protected markUnknown(): void {
-    void this.handleSwipe('unknown');
+    void this.commitSwipe('unknown');
   }
 
   protected onPointerDown(event: PointerEvent): void {
-    if (!this.currentCard() || this.savingReview()) {
+    if (!this.currentCard() || this.savingReview() || this.exiting()) {
       return;
     }
 
@@ -151,22 +201,42 @@ export class FlashcardsHome {
     }
 
     const offset = event.clientX - this.dragStartX();
-    this.dragOffset.set(Math.max(-132, Math.min(132, offset)));
+    this.dragOffset.set(Math.max(-SWIPE_CLAMP, Math.min(SWIPE_CLAMP, offset)));
   }
 
   protected onPointerUp(): void {
-    const offset = this.dragOffset();
-    this.isDragging.set(false);
-    this.dragOffset.set(0);
-
-    if (offset <= -52) {
-      this.markKnown();
+    if (!this.isDragging()) {
       return;
     }
 
-    if (offset >= 52) {
-      this.markUnknown();
+    const offset = this.dragOffset();
+    this.isDragging.set(false);
+
+    if (Math.abs(offset) >= SWIPE_THRESHOLD) {
+      void this.commitSwipe(offset < 0 ? 'known' : 'unknown');
+      return;
     }
+
+    // Sotto soglia: rientro elastico, swipe annullato.
+    this.dragOffset.set(0);
+  }
+
+  /** Conferma l'esito: card che vola via + vibrazione, poi avanza la coda. */
+  private async commitSwipe(outcome: SwipeOutcome): Promise<void> {
+    if (this.exiting() || this.savingReview() || !this.currentCard()) {
+      return;
+    }
+
+    this.exiting.set(outcome);
+    this.isAnswerVisible.set(false);
+    navigator.vibrate?.(35);
+    await delay(EXIT_ANIMATION_MS);
+    await this.handleSwipe(outcome);
+    this.exiting.set(null);
+    this.dragOffset.set(0);
+
+    this.dealing.set(true);
+    setTimeout(() => this.dealing.set(false), 260);
   }
 
   protected masteryLabel(card: Flashcard): string {

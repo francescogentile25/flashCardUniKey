@@ -1,7 +1,17 @@
 <section class="trainer-shell">
   <header class="hero">
-    <p>Ripasso medicina</p>
+    <p>Reparto ripasso</p>
     <h1>Studia dove perdi punti.</h1>
+    <!-- ECG che finisce in codino di maiale -->
+    <svg class="ecg-tail" viewBox="0 0 220 48" aria-hidden="true" focusable="false">
+      <path
+        d="M0 28 H58 L66 28 L74 8 L82 42 L90 28 H140 c12 -22 34 -12 24 2 c-7 10 -22 4 -13 -8 c6 -8 17 -5 15 4"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="3"
+        stroke-linecap="round"
+        stroke-linejoin="round" />
+    </svg>
     <nav class="hero-actions">
       <a routerLink="/new"><i class="pi pi-plus" aria-hidden="true"></i> Nuova card</a>
       <a routerLink="/import"><i class="pi pi-file-import" aria-hidden="true"></i> Genera da PDF</a>
@@ -35,7 +45,11 @@
 
   <div class="session-line">
     <span>{{ activeModeConfig().label }}: {{ remainingCount() }} card</span>
-    <span>{{ progress() }}%</span>
+    <span class="session-tally">
+      <em class="ok">✓ {{ knownCount() }}</em>
+      <em class="ko">✗ {{ unknownCount() }}</em>
+      {{ progress() }}%
+    </span>
   </div>
 
   <div class="progress-track" aria-label="Avanzamento">
@@ -46,7 +60,7 @@
     <div class="empty-state">Caricamento deck...</div>
   } @else if (empty()) {
     <div class="empty-state">
-      <strong>Nessuna card.</strong>
+      <strong>Il porcile è vuoto.</strong>
       <a routerLink="/new">Crea la prima domanda</a>
     </div>
   } @else if (currentCard(); as card) {
@@ -54,7 +68,12 @@
       <article
         class="study-card"
         [class.is-flipped]="isAnswerVisible()"
-        [style.transform]="'translateX(' + dragOffset() + 'px) rotate(' + dragOffset() / 22 + 'deg)'"
+        [class.is-dragging]="isDragging()"
+        [class.is-exiting]="exiting()"
+        [class.is-dealing]="dealing()"
+        [class.leans-known]="dragOutcome() === 'known'"
+        [class.leans-unknown]="dragOutcome() === 'unknown'"
+        [style.transform]="cardTransform()"
         (pointerdown)="onPointerDown($event)"
         (pointermove)="onPointerMove($event)"
         (pointerup)="onPointerUp()"
@@ -62,8 +81,8 @@
         <div class="face front">
           <div class="chips">
             <span>{{ masteryLabel(card) }}</span>
+            <span>Priorita {{ cardPriority(card) }}</span>
           </div>
-          <p>Priorita {{ cardPriority(card) }}</p>
           <h2>{{ card.question }}</h2>
           <button
             class="ghost-button"
@@ -81,7 +100,7 @@
             <span>{{ card.known_count }} so</span>
             <span>{{ card.unknown_count }} no</span>
           </div>
-          <p>{{ card.answer }}</p>
+          <p class="answer-text">{{ card.answer }}</p>
           <button
             class="ghost-button"
             type="button"
@@ -91,6 +110,18 @@
             Torna alla domanda
           </button>
         </div>
+
+        <!-- Timbri da cartella clinica: feedback dello swipe -->
+        <span
+          class="stamp stamp-known"
+          [style.opacity]="stampOpacity('known')"
+          [class.armed]="armed() && dragOutcome() === 'known'"
+          aria-hidden="true">La so</span>
+        <span
+          class="stamp stamp-unknown"
+          [style.opacity]="stampOpacity('unknown')"
+          [class.armed]="armed() && dragOutcome() === 'unknown'"
+          aria-hidden="true">Non la so</span>
       </article>
     </div>
 
@@ -101,19 +132,27 @@
     </div>
 
     <div class="action-bar">
-      <button class="answer known" type="button" [disabled]="savingReview()" (click)="markKnown()">
+      <button
+        class="answer known"
+        type="button"
+        [disabled]="savingReview() || exiting()"
+        (click)="markKnown()">
         <i class="pi pi-check" aria-hidden="true"></i>
         La so
       </button>
-      <button class="answer unknown" type="button" [disabled]="savingReview()" (click)="markUnknown()">
+      <button
+        class="answer unknown"
+        type="button"
+        [disabled]="savingReview() || exiting()"
+        (click)="markUnknown()">
         <i class="pi pi-times" aria-hidden="true"></i>
         Non la so
       </button>
     </div>
   } @else {
     <div class="empty-state">
-      <strong>{{ activeModeConfig().label }} completato.</strong>
-      <span>Passa a un'altra modalita o ricarica il deck.</span>
+      <strong>Tutto grufolato per oggi.</strong>
+      <span>Cambia modalità o ricarica il deck.</span>
       <button type="button" (click)="loadCards()">Ricarica</button>
     </div>
   }

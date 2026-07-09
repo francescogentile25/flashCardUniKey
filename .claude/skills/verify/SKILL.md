@@ -29,3 +29,5 @@ Nello scratchpad: `npm i puppeteer-core`, poi script con `puppeteer.launch({ exe
 - Generazione flashcard verificabile LIVE anche da localhost: la Edge Function `generate-flashcards` è deployata e l'URL Supabase in `environment.development.ts` è reale. Incollare testo nel textarea via `evaluate` + `dispatchEvent(new Event('input', {bubbles:true}))` (50k chars = 3 blocchi). Consuma quota Groq free tier — tenere i test piccoli e NON cliccare "Salva nel deck" (scrive su DB).
 - Groq free tier llama-3.3-70b: TPM limit basso, i 429 sono normali con blocchi da 20k chars — il client fa retry con backoff 25s, un run da 3 blocchi dura ~1-2 min.
 - CORS Edge Function: consente solo `authorization, x-client-info, apikey, content-type` — mai aggiungere altri header (es. `Prefer`) alla chiamata functions.
+- Per testare lo swipe del deck senza sporcare i contatori di ripasso sul DB: `page.setRequestInterception(true)` e rispondere 200 `[]` alle PATCH verso `/rest/v1/flashcards` (header `access-control-allow-origin: *`).
+- Drag swipe con puppeteer: `mouse.down()` → `mouse.move(cx±110, cy, {steps:10})` → `mouse.up()`; soglia conferma 64px, sotto rientra elastica.

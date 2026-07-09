@@ -11,11 +11,28 @@
 }
 
 @import "primeicons/primeicons.css";
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,100..900;1,100..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:ital,wght@0,400;0,600;0,700;0,800;1,400&family=IBM+Plex+Mono:wght@500;600;700&display=swap');
 
 :root {
   --base-font-size: 14px;
-  --base-font-family: "Noto Sans";
+  --base-font-family: 'Nunito';
+  --font-display: 'Fredoka', sans-serif;
+  --font-data: 'IBM Plex Mono', monospace;
+
+  /* La clinica del porcellino — rosa cotenna + verde camice */
+  --grugno: #42232c;          /* testo principale */
+  --grugno-tenue: #8a6570;    /* testo secondario */
+  --cotenna: #f7ddd5;         /* sfondo pagina */
+  --carta: #fffaf7;           /* superfici */
+  --rosa: #e88da4;            /* accento maiale */
+  --rosa-tenue: #f6c6d0;      /* accento soft, hover */
+  --camice: #1f7a5c;          /* verde chirurgico — esito positivo */
+  --camice-tenue: #d9efe4;
+  --referto: #c24438;         /* rosso timbro — errori, esito negativo */
+  --referto-tenue: #f9ddd7;
+  --linea: rgba(66, 35, 44, 0.16);
+  --ombra: 0 10px 30px -18px rgba(66, 35, 44, 0.45);
+
   --blumelli: #003057;
   --header-height: 70px;
   --footer-height: 50px;
@@ -34,7 +51,18 @@ html {
 }
 
 body {
+  background: var(--cotenna);
+  color: var(--grugno);
   margin: 0;
+}
+
+::selection {
+  background: var(--rosa-tenue);
+}
+
+:focus-visible {
+  outline: 3px solid var(--rosa);
+  outline-offset: 2px;
 }
 
 ::-webkit-scrollbar {
@@ -43,16 +71,25 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--blumelli);
+  background: var(--cotenna);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #D2D7DF;
+  background: var(--rosa);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #B5B6C4;
+  background: var(--grugno-tenue);
   border-radius: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }

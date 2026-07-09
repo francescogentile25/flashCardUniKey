@@ -3,7 +3,7 @@
 }
 
 .import-shell {
-  color: #f7f2e8;
+  color: var(--grugno);
   display: grid;
   gap: 1rem;
   margin: 0 auto;
@@ -13,10 +13,14 @@
 }
 
 .back-link {
-  color: #aeb7c6;
+  color: var(--grugno-tenue);
   display: inline-flex;
   gap: 0.5rem;
   text-decoration: none;
+}
+
+.back-link:hover {
+  color: var(--grugno);
 }
 
 header p,
@@ -25,22 +29,26 @@ header h1 {
 }
 
 header p {
-  color: #f8d65b;
-  font-size: 0.76rem;
-  font-weight: 900;
+  color: var(--referto);
+  font-family: var(--font-data);
+  font-size: 0.74rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
 }
 
 header h1 {
-  font-size: clamp(1.8rem, 9vw, 3.4rem);
-  line-height: 0.98;
+  font-family: var(--font-display);
+  font-size: clamp(1.7rem, 8vw, 3.1rem);
+  font-weight: 600;
+  line-height: 1.02;
 }
 
 .panel,
 .draft {
-  background: #171d25;
-  border: 1px solid rgba(255, 255, 255, 0.09);
-  border-radius: 8px;
+  background: var(--carta);
+  border: 1px solid var(--linea);
+  border-radius: 16px;
   display: grid;
   gap: 0.8rem;
   padding: 1rem;
@@ -48,13 +56,18 @@ header h1 {
 
 .file-drop {
   align-items: center;
-  border: 1px dashed #4a5566;
-  border-radius: 8px;
-  color: #aeb7c6;
+  border: 1.5px dashed var(--rosa);
+  border-radius: 12px;
+  color: var(--grugno-tenue);
   cursor: pointer;
   display: flex;
   gap: 0.6rem;
   padding: 0.9rem;
+  transition: background 140ms ease;
+}
+
+.file-drop:hover {
+  background: var(--rosa-tenue);
 }
 
 .file-drop input {
@@ -62,7 +75,7 @@ header h1 {
 }
 
 .file-drop i {
-  color: #f8d65b;
+  color: var(--referto);
   font-size: 1.3rem;
 }
 
@@ -74,17 +87,17 @@ header h1 {
 
 .field > span,
 .count > span {
-  color: #f7f2e8;
+  color: var(--grugno);
   font-size: 0.82rem;
-  font-weight: 900;
+  font-weight: 800;
 }
 
 textarea,
 input[type='number'] {
-  background: #0e1217;
-  border: 1px solid #323b49;
-  border-radius: 8px;
-  color: #f7f2e8;
+  background: #ffffff;
+  border: 1px solid var(--linea);
+  border-radius: 12px;
+  color: var(--grugno);
   line-height: 1.45;
   padding: 0.8rem;
   resize: vertical;
@@ -93,13 +106,14 @@ input[type='number'] {
 
 textarea:focus,
 input[type='number']:focus {
-  border-color: #f8d65b;
-  outline: 3px solid rgba(248, 214, 91, 0.14);
+  border-color: var(--rosa);
+  outline: 3px solid var(--rosa-tenue);
 }
 
 .hint {
-  color: #f8d65b;
+  color: var(--camice);
   font-size: 0.85rem;
+  font-weight: 700;
 }
 
 .generate-row,
@@ -125,12 +139,12 @@ button {
 
 .primary {
   align-items: center;
-  background: #f8d65b;
+  background: var(--grugno);
   border: 0;
-  border-radius: 8px;
-  color: #14171f;
+  border-radius: 12px;
+  color: var(--cotenna);
   display: inline-flex;
-  font-weight: 900;
+  font-weight: 800;
   gap: 0.45rem;
   justify-content: center;
   min-height: 44px;
@@ -156,32 +170,32 @@ button {
 
 .check {
   align-items: center;
-  color: #aeb7c6;
+  color: var(--grugno-tenue);
   display: inline-flex;
-  font-weight: 900;
+  font-weight: 800;
   gap: 0.45rem;
 }
 
 .link-danger {
   background: transparent;
   border: 0;
-  color: #fecaca;
+  color: var(--referto);
   font-size: 1rem;
 }
 
 .feedback {
-  border-radius: 8px;
+  border-radius: 12px;
   padding: 0.8rem;
 }
 
 .feedback.success {
-  background: #12311f;
-  color: #bbf7d0;
+  background: var(--camice-tenue);
+  color: var(--camice);
 }
 
 .feedback.error {
-  background: #3b1518;
-  color: #fecaca;
+  background: var(--referto-tenue);
+  color: var(--referto);
 }
 
 @media (min-width: 760px) {

@@ -1,7 +1,7 @@
 :host {
-  backdrop-filter: blur(16px);
-  background: rgba(14, 18, 23, 0.92);
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(14px);
+  background: rgba(255, 250, 247, 0.92);
+  border-top: 1px solid var(--linea);
   bottom: 0;
   display: block;
   left: 0;
@@ -23,7 +23,7 @@
 
 .brand {
   align-items: center;
-  color: #f8fafc;
+  color: var(--grugno);
   display: inline-flex;
   gap: 0.6rem;
   min-width: 0;
@@ -32,14 +32,13 @@
 
 .brand-mark {
   align-items: center;
-  background: #f8d65b;
-  border-radius: 8px;
-  color: #14171f;
+  background: var(--rosa);
+  border-radius: 50% 50% 46% 46%;
+  color: var(--grugno);
   display: inline-flex;
-  font-weight: 800;
-  height: 38px;
+  height: 40px;
   justify-content: center;
-  width: 38px;
+  width: 40px;
 }
 
 .brand strong,
@@ -48,10 +47,17 @@
   line-height: 1.2;
 }
 
+.brand strong {
+  font-family: var(--font-display);
+  font-size: 1.12rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
 .brand small {
-  color: #aeb7c6;
-  font-size: 0.82rem;
-  margin-top: 0.15rem;
+  color: var(--grugno-tenue);
+  font-size: 0.78rem;
+  margin-top: 0.1rem;
 }
 
 nav {
@@ -60,24 +66,25 @@ nav {
 }
 
 nav a {
-  border-radius: 8px;
-  color: #cbd5e1;
+  border-radius: 12px;
+  color: var(--grugno-tenue);
   display: inline-flex;
   font-weight: 800;
   gap: 0.4rem;
   padding: 0.7rem 0.8rem;
   text-decoration: none;
+  transition: background 140ms ease, color 140ms ease;
 }
 
 nav a.active,
 nav a:hover {
-  background: rgba(248, 214, 91, 0.14);
-  color: #f8d65b;
+  background: var(--rosa-tenue);
+  color: var(--grugno);
 }
 
 @media (min-width: 760px) {
   :host {
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    border-bottom: 1px solid var(--linea);
     border-top: 0;
     bottom: auto;
     top: 0;
