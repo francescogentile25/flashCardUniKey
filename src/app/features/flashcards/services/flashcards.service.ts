@@ -23,6 +23,12 @@ export class FlashcardsService {
     Prefer: 'return=representation'
   });
 
+  // Niente `Prefer`: è un header PostgREST e la CORS della Edge Function non lo consente.
+  private readonly functionHeaders = new HttpHeaders({
+    apikey: environment.supabase.publishableKey,
+    Authorization: `Bearer ${environment.supabase.publishableKey}`
+  });
+
   getAll(): Observable<Flashcard[]> {
     return this.http.get<Flashcard[]>(`${this.baseUrl}?select=*&order=created_at.asc`, {
       headers: this.headers
@@ -45,7 +51,7 @@ export class FlashcardsService {
     return this.http.post<{ cards: GeneratedCard[] }>(
       this.functionsUrl,
       { text, count },
-      { headers: this.headers }
+      { headers: this.functionHeaders }
     );
   }
 
