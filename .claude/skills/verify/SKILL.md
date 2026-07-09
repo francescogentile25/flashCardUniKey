@@ -31,3 +31,7 @@ Nello scratchpad: `npm i puppeteer-core`, poi script con `puppeteer.launch({ exe
 - CORS Edge Function: consente solo `authorization, x-client-info, apikey, content-type` — mai aggiungere altri header (es. `Prefer`) alla chiamata functions.
 - Per testare lo swipe del deck senza sporcare i contatori di ripasso sul DB: `page.setRequestInterception(true)` e rispondere 200 `[]` alle PATCH verso `/rest/v1/flashcards` (header `access-control-allow-origin: *`).
 - Drag swipe con puppeteer: `mouse.down()` → `mouse.move(cx±110, cy, {steps:10})` → `mouse.up()`; soglia conferma 64px, sotto rientra elastica.
+- Due trappole nel misurare questa UI:
+  - `html { scroll-behavior: smooth }` rende asincrono `el.scrollTop = N`. Per testare lo scroll usa `el.scrollTo({top: N, behavior: 'instant'})` + due `requestAnimationFrame`, altrimenti leggi sempre 0 e credi che la pagina non scrolli.
+  - `.stamp` ha `pointer-events: none`, quindi `elementFromPoint` non lo restituisce mai: non prova che sia coperto. Per l'ordine di pittura nel contesto 3D confronta `new DOMMatrix(getComputedStyle(el).transform).m43` (asse Z) tra timbro e `.face`.
+- `overflow-x` non-visible su `html`/`body` forza `overflow-y` a hidden (spec CSS Overflow) e uccide lo scroll di pagina. Il contenuto orizzontale in eccesso va ritagliato su `.app-main` (height auto), mai sul documento.

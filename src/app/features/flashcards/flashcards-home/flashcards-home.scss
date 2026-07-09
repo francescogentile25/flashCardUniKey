@@ -212,6 +212,8 @@
 .deck-zone {
   display: grid;
   min-height: 49dvh;
+  /* le orecchie sporgono 13px sopra la card: non devono toccare la barra */
+  padding-top: 16px;
   place-items: center;
   perspective: 1200px;
 }
@@ -368,35 +370,39 @@
   width: 96px;
 }
 
-/* Timbro da cartella clinica: il feedback dello swipe. */
+/* Timbro da cartella clinica: il feedback dello swipe.
+   translateZ(2px) lo tiene davanti alle facce (1px) nel contesto 3D del flip:
+   qui z-index non basta, decide la posizione sull'asse Z. */
 .stamp {
   border: 4px double currentColor;
   border-radius: 10px;
   font-family: var(--font-data);
-  font-size: 1.5rem;
+  font-size: clamp(1.05rem, 5vw, 1.4rem);
   font-weight: 700;
-  left: 50%;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
   opacity: 0;
-  padding: 0.5rem 1.1rem;
+  padding: 0.45rem 0.9rem;
   pointer-events: none;
   position: absolute;
   text-transform: uppercase;
-  top: 34%;
+  top: 21%;
   white-space: nowrap;
-  z-index: 5;
 }
 
+/* Ogni timbro sta sul lato opposto al gesto: la card si allontana, il timbro
+   resta dentro lo schermo. */
 .stamp-known {
   background: rgba(217, 239, 228, 0.92);
   color: var(--camice);
-  transform: translateX(-50%) rotate(-11deg);
+  right: 1.1rem;
+  transform: translateZ(2px) rotate(11deg);
 }
 
 .stamp-unknown {
   background: rgba(249, 221, 215, 0.92);
   color: var(--referto);
-  transform: translateX(-50%) rotate(11deg);
+  left: 1.1rem;
+  transform: translateZ(2px) rotate(-11deg);
 }
 
 .stamp.armed {
@@ -404,11 +410,11 @@
 }
 
 .stamp-known.armed {
-  transform: translateX(-50%) rotate(-11deg) scale(1.12);
+  transform: translateZ(2px) rotate(11deg) scale(1.12);
 }
 
 .stamp-unknown.armed {
-  transform: translateX(-50%) rotate(11deg) scale(1.12);
+  transform: translateZ(2px) rotate(-11deg) scale(1.12);
 }
 
 .ghost-button,
