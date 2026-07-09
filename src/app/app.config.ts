@@ -5,7 +5,9 @@ import {
   provideZoneChangeDetection
 } from '@angular/core';
 import { provideRouter, withComponentInputBinding, withInMemoryScrolling } from '@angular/router';
+import { provideServiceWorker } from '@angular/service-worker';
 
+import { environment } from '../environments/environment';
 import { routes } from './app.routes';
 import { provideHttpClient, withInterceptors } from "@angular/common/http";
 import { provideAnimationsAsync } from "@angular/platform-browser/animations/async";
@@ -49,5 +51,11 @@ export const appConfig: ApplicationConfig = {
     }),
     MessageService,
     importProvidersFrom(ToastModule),
+    // Il deck resta consultabile offline; i ripassi fatti senza rete vengono
+    // accodati da ReviewSyncService e rigiocati al ritorno online.
+    provideServiceWorker('ngsw-worker.js', {
+      enabled: environment.production,
+      registrationStrategy: 'registerWhenStable:30000'
+    })
   ]
 };

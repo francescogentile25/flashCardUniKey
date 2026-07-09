@@ -35,3 +35,22 @@ Nello scratchpad: `npm i puppeteer-core`, poi script con `puppeteer.launch({ exe
   - `html { scroll-behavior: smooth }` rende asincrono `el.scrollTop = N`. Per testare lo scroll usa `el.scrollTo({top: N, behavior: 'instant'})` + due `requestAnimationFrame`, altrimenti leggi sempre 0 e credi che la pagina non scrolli.
   - `.stamp` ha `pointer-events: none`, quindi `elementFromPoint` non lo restituisce mai: non prova che sia coperto. Per l'ordine di pittura nel contesto 3D confronta `new DOMMatrix(getComputedStyle(el).transform).m43` (asse Z) tra timbro e `.face`.
 - `overflow-x` non-visible su `html`/`body` forza `overflow-y` a hidden (spec CSS Overflow) e uccide lo scroll di pagina. Il contenuto orizzontale in eccesso va ritagliato su `.app-main` (height auto), mai sul documento.
+
+## Verificare le feature che dipendono dallo schema DB
+
+Il DB in produzione puo essere indietro rispetto a `supabase/schema.sql` (la migrazione la esegue l'utente a mano nel SQL Editor). Per verificare comunque l'app, intercetta le REST di Supabase e servi fixture con lo schema nuovo. Trappole:
+
+- Il preflight: rispondi alle `OPTIONS` includendo `access-control-allow-methods` e `access-control-allow-headers` (`apikey,authorization,content-type,prefer`), altrimenti il browser blocca PATCH/POST e misuri il mock, non l'app.
+- `page.setOfflineMode(true)` **non** blocca le richieste servite da `req.respond`: per simulare l'assenza di rete usa `req.abort('internetdisconnected')`.
+- `localStorage` e condiviso tra le pagine della stessa origin: azzeralo a inizio scenario o la coda offline di un test falsa il successivo.
+
+Stato dello schema live, senza credenziali (la publishable key sta in `environment.development.ts`):
+
+```powershell
+$key='...'; $h=@{apikey=$key; Authorization="Bearer $key"}
+Invoke-RestMethod -Uri 'https://ooudsqwknnkoebjpkiss.supabase.co/rest/v1/flashcards?select=*&limit=1' -Headers $h
+```
+
+## PWA / service worker
+
+Il SW e attivo solo nella build di produzione (`enabled: environment.production`). Per provarlo: `npx ng build`, servi `dist/FlashCardUniKey.FE/browser` da un server statico su localhost (origine sicura), attendi `navigator.serviceWorker.ready`, poi `setOfflineMode(true)` + `reload()`. Le GET REST sono in un `dataGroup` freshness, quindi offline il deck arriva dalla cache.
