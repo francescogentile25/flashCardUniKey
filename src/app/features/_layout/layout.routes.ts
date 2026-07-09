@@ -23,6 +23,16 @@ export const layoutRoutes: Routes = [
           .then(c => c.FlashcardImport)
       },
       {
+        path: 'quiz',
+        loadComponent: () => import('./../flashcards/flashcard-quiz/flashcard-quiz')
+          .then(c => c.FlashcardQuiz)
+      },
+      {
+        path: 'stats',
+        loadComponent: () => import('./../flashcards/flashcard-stats/flashcard-stats')
+          .then(c => c.FlashcardStats)
+      },
+      {
         path: 'login',
         canActivate: [loginGuard],
         loadComponent: () => import('./../auth/login/login')

@@ -1,0 +1,119 @@
+<section class="stats-shell">
+  <a class="back-link" routerLink="/">
+    <i class="pi pi-arrow-left" aria-hidden="true"></i>
+    Torna al deck
+  </a>
+
+  <header>
+    <p>Cartella clinica</p>
+    <h1>Come stai andando.</h1>
+  </header>
+
+  @if (error()) {
+    <div class="feedback error" role="alert">{{ error() }}</div>
+  }
+
+  @if (loading()) {
+    <div class="panel state">Caricamento storico...</div>
+  } @else {
+    <div class="streak-card">
+      <span class="streak-pig" aria-hidden="true">🐖</span>
+      <div>
+        <strong>{{ streak() }}</strong>
+        <span>{{ streak() === 1 ? 'giorno di fila' : 'giorni di fila' }}</span>
+      </div>
+      <p>
+        @if (reviewedToday() > 0) {
+          Oggi hai ripassato {{ reviewedToday() }} card.
+        } @else if (streak() > 0) {
+          Oggi non hai ancora ripassato: una card e la serie resta viva.
+        } @else {
+          Ripassa una card per far partire la serie.
+        }
+      </p>
+    </div>
+
+    <div class="tiles">
+      <div class="tile">
+        <strong>{{ totalReviews() }}</strong>
+        <span>Ripassi ({{ windowDays }}gg)</span>
+      </div>
+      <div class="tile">
+        <strong>{{ accuracy() }}%</strong>
+        <span>Risposte esatte</span>
+      </div>
+      <div class="tile">
+        <strong>{{ masteredCount() }}</strong>
+        <span>Card dominate</span>
+      </div>
+    </div>
+
+    <section class="panel">
+      <div class="panel-title">
+        <strong>Ultimi {{ windowDays }} giorni</strong>
+        <span class="legend">
+          <em class="ok"></em> so
+          <em class="ko"></em> non so
+        </span>
+      </div>
+
+      @if (hasData()) {
+        <div class="chart" role="img" aria-label="Ripassi giornalieri degli ultimi 30 giorni">
+          @for (day of days(); track day.day) {
+            <div class="bar-slot" [title]="day.label + ': ' + day.total + ' ripassi'">
+              <div class="bar" [style.height.%]="barHeight(day.total)">
+                @if (day.total > 0) {
+                  <span class="bar-known" [style.flex]="day.known"></span>
+                  <span class="bar-unknown" [style.flex]="day.unknown"></span>
+                }
+              </div>
+            </div>
+          }
+        </div>
+        <div class="chart-axis">
+          <span>{{ days()[0].label }}</span>
+          <span>oggi</span>
+        </div>
+      } @else {
+        <p class="state">Nessun ripasso registrato. Torna al deck e fai uno swipe.</p>
+      }
+    </section>
+
+    @if (subjectTally().length > 0) {
+      <section class="panel">
+        <div class="panel-title"><strong>Per materia</strong></div>
+        <ul class="subject-list">
+          @for (item of subjectTally(); track item.subject) {
+            <li>
+              <div class="subject-head">
+                <span>{{ item.subject }}</span>
+                <span class="subject-score">{{ accuracyOf(item.known, item.total) }}%</span>
+              </div>
+              <div class="meter" [attr.aria-label]="item.known + ' esatte su ' + item.total">
+                <span [style.width.%]="accuracyOf(item.known, item.total)"></span>
+              </div>
+              <small>{{ item.total }} ripassi</small>
+            </li>
+          }
+        </ul>
+      </section>
+    }
+
+    @if (weakest().length > 0) {
+      <section class="panel">
+        <div class="panel-title"><strong>Le tue bestie nere</strong></div>
+        <ul class="weak-list">
+          @for (item of weakest(); track item.flashcardId) {
+            <li>
+              <span class="weak-count">{{ item.unknown }}✗</span>
+              <div>
+                <p class="weak-question">{{ item.card?.question }}</p>
+                <small>{{ item.card?.subject }} — sbagliata {{ item.unknown }} volte su {{ item.total }}</small>
+              </div>
+            </li>
+          }
+        </ul>
+      </section>
+    }
+  }
+</section>

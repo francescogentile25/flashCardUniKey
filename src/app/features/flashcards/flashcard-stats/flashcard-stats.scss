@@ -1,0 +1,274 @@
+:host {
+  display: block;
+}
+
+.stats-shell {
+  color: var(--grugno);
+  display: grid;
+  gap: 1rem;
+  margin: 0 auto;
+  max-width: 780px;
+  min-height: 100dvh;
+  padding: 1.15rem 1rem 1.4rem;
+}
+
+.back-link {
+  color: var(--grugno-tenue);
+  display: inline-flex;
+  gap: 0.5rem;
+  text-decoration: none;
+}
+
+header p,
+header h1 {
+  margin: 0;
+}
+
+header p {
+  color: var(--referto);
+  font-family: var(--font-data);
+  font-size: 0.74rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+header h1 {
+  font-family: var(--font-display);
+  font-size: clamp(1.8rem, 8vw, 3.2rem);
+  font-weight: 600;
+  line-height: 1.02;
+}
+
+.panel,
+.streak-card,
+.tile {
+  background: var(--carta);
+  border: 1px solid var(--linea);
+  border-radius: 16px;
+}
+
+.panel {
+  display: grid;
+  gap: 0.85rem;
+  padding: 1rem;
+}
+
+.feedback.error {
+  background: var(--referto-tenue);
+  border-radius: 12px;
+  color: var(--referto);
+  padding: 0.8rem;
+}
+
+.state {
+  color: var(--grugno-tenue);
+  margin: 0;
+  text-align: center;
+}
+
+.streak-card {
+  align-items: center;
+  display: grid;
+  gap: 0.35rem 1rem;
+  grid-template-columns: auto 1fr;
+  padding: 1rem;
+}
+
+.streak-pig {
+  font-size: 2.6rem;
+  grid-row: span 2;
+  line-height: 1;
+  transform: scaleX(-1);
+}
+
+.streak-card strong {
+  font-family: var(--font-display);
+  font-size: 2.2rem;
+  font-weight: 600;
+  margin-right: 0.4rem;
+}
+
+.streak-card > div > span {
+  color: var(--grugno-tenue);
+  font-weight: 700;
+}
+
+.streak-card p {
+  color: var(--grugno-tenue);
+  font-size: 0.85rem;
+  grid-column: 2;
+  margin: 0;
+}
+
+.tiles {
+  display: grid;
+  gap: 0.6rem;
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.tile {
+  display: grid;
+  gap: 0.15rem;
+  padding: 0.75rem 0.5rem;
+  text-align: center;
+}
+
+.tile strong {
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  font-weight: 600;
+}
+
+.tile span {
+  color: var(--grugno-tenue);
+  font-family: var(--font-data);
+  font-size: 0.66rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.panel-title {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+}
+
+.panel-title strong {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 500;
+}
+
+.legend {
+  align-items: center;
+  color: var(--grugno-tenue);
+  display: inline-flex;
+  font-size: 0.72rem;
+  gap: 0.3rem;
+}
+
+.legend em {
+  border-radius: 3px;
+  display: inline-block;
+  height: 10px;
+  margin-left: 0.4rem;
+  width: 10px;
+}
+
+.legend .ok {
+  background: var(--camice);
+}
+
+.legend .ko {
+  background: var(--referto);
+}
+
+/* Grafico: una colonna per giorno, verde sopra rosso. */
+.chart {
+  align-items: flex-end;
+  display: flex;
+  gap: 2px;
+  height: 130px;
+}
+
+.bar-slot {
+  align-items: flex-end;
+  display: flex;
+  flex: 1;
+  height: 100%;
+  min-width: 0;
+}
+
+.bar {
+  background: var(--cotenna);
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  width: 100%;
+}
+
+.bar-known {
+  background: var(--camice);
+}
+
+.bar-unknown {
+  background: var(--referto);
+}
+
+.chart-axis {
+  color: var(--grugno-tenue);
+  display: flex;
+  font-family: var(--font-data);
+  font-size: 0.68rem;
+  justify-content: space-between;
+}
+
+.subject-list,
+.weak-list {
+  display: grid;
+  gap: 0.85rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.subject-head {
+  display: flex;
+  font-weight: 800;
+  justify-content: space-between;
+}
+
+.subject-score {
+  color: var(--camice);
+  font-family: var(--font-data);
+}
+
+.meter {
+  background: var(--cotenna);
+  border-radius: 999px;
+  height: 8px;
+  margin: 0.35rem 0 0.2rem;
+  overflow: hidden;
+}
+
+.meter span {
+  background: var(--camice);
+  display: block;
+  height: 100%;
+}
+
+.subject-list small,
+.weak-list small {
+  color: var(--grugno-tenue);
+  font-size: 0.75rem;
+}
+
+.weak-list li {
+  align-items: flex-start;
+  display: flex;
+  gap: 0.75rem;
+}
+
+.weak-count {
+  background: var(--referto-tenue);
+  border-radius: 10px;
+  color: var(--referto);
+  flex: 0 0 auto;
+  font-family: var(--font-data);
+  font-weight: 700;
+  padding: 0.35rem 0.5rem;
+}
+
+.weak-question {
+  font-weight: 700;
+  line-height: 1.35;
+  margin: 0 0 0.2rem;
+}
+
+@media (min-width: 760px) {
+  .stats-shell {
+    padding: 2rem 1.5rem 2.6rem;
+  }
+}

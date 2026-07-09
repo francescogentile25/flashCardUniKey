@@ -1,0 +1,115 @@
+<section class="quiz-shell">
+  <a class="back-link" routerLink="/">
+    <i class="pi pi-arrow-left" aria-hidden="true"></i>
+    Torna al deck
+  </a>
+
+  <header>
+    <p>Simulazione d'esame</p>
+    <h1>Quattro risposte, una giusta.</h1>
+  </header>
+
+  @if (error()) {
+    <div class="feedback error" role="alert">{{ error() }}</div>
+  }
+
+  @if (loading()) {
+    <div class="panel state">Caricamento deck...</div>
+  } @else if (finished()) {
+    <div class="panel result">
+      <span class="result-pig" aria-hidden="true">🐖</span>
+      <strong>{{ correctCount() }} / {{ total() }}</strong>
+      <p>{{ scorePercent() }}% di risposte esatte. Gli errori sono già finiti nel ripasso.</p>
+      <div class="result-actions">
+        <button type="button" class="primary" (click)="start()">Rifai il quiz</button>
+        <a class="secondary" routerLink="/">Torna al deck</a>
+      </div>
+    </div>
+  } @else if (!started()) {
+    <div class="panel setup">
+      @if (subjects().length > 1) {
+        <div class="field">
+          <span>Materia</span>
+          <div class="subject-bar" role="group" aria-label="Materia del quiz">
+            <button
+              type="button"
+              [class.active]="subject() === allSubjects"
+              (click)="setSubject(allSubjects)">
+              Tutte
+            </button>
+            @for (item of subjects(); track item) {
+              <button type="button" [class.active]="subject() === item" (click)="setSubject(item)">
+                {{ item }}
+              </button>
+            }
+          </div>
+        </div>
+      }
+
+      <label class="field">
+        <span>Numero domande</span>
+        <input type="number" min="3" max="30" [value]="length()" (input)="onLengthInput($event)" />
+      </label>
+
+      @if (canStart()) {
+        <button type="button" class="primary" (click)="start()">
+          <i class="pi pi-play" aria-hidden="true"></i>
+          Inizia il quiz
+        </button>
+      } @else {
+        <p class="state">
+          Servono almeno {{ minCards }} card in questa materia. Ne hai {{ scopedCards().length }}.
+        </p>
+      }
+    </div>
+  } @else if (current(); as question) {
+    <div class="quiz-meta">
+      <span>Domanda {{ index() + 1 }} di {{ total() }}</span>
+      <span class="score">✓ {{ correctCount() }}</span>
+    </div>
+
+    <div class="progress-track" aria-label="Avanzamento quiz">
+      <span [style.width.%]="(index() / total()) * 100"></span>
+    </div>
+
+    <article class="panel question">
+      <div class="chips">
+        <span>{{ question.card.subject }}</span>
+      </div>
+      <h2>{{ question.card.question }}</h2>
+    </article>
+
+    <div class="options">
+      @for (option of question.options; track $index) {
+        <button
+          type="button"
+          class="option"
+          [class]="optionClass($index)"
+          [disabled]="answered()"
+          (click)="pick($index)">
+          <span class="marker" aria-hidden="true">
+            @if (answered() && option.correct) {
+              <i class="pi pi-check"></i>
+            } @else if (answered() && $index === picked()) {
+              <i class="pi pi-times"></i>
+            } @else {
+              {{ $index + 1 }}
+            }
+          </span>
+          <span class="option-text">{{ option.text }}</span>
+        </button>
+      }
+    </div>
+
+    @if (answered()) {
+      <button type="button" class="primary next" (click)="next()">
+        @if (index() + 1 >= total()) {
+          Vedi il risultato
+        } @else {
+          Domanda successiva
+        }
+        <i class="pi pi-arrow-right" aria-hidden="true"></i>
+      </button>
+    }
+  }
+</section>

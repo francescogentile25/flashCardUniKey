@@ -17,11 +17,19 @@
   <nav aria-label="Navigazione principale">
     <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
       <i class="pi pi-bolt" aria-hidden="true"></i>
-      Deck
+      <span>Deck</span>
+    </a>
+    <a routerLink="/quiz" routerLinkActive="active">
+      <i class="pi pi-list-check" aria-hidden="true"></i>
+      <span>Quiz</span>
+    </a>
+    <a routerLink="/stats" routerLinkActive="active">
+      <i class="pi pi-chart-bar" aria-hidden="true"></i>
+      <span>Progressi</span>
     </a>
     <a routerLink="/new" routerLinkActive="active">
       <i class="pi pi-plus" aria-hidden="true"></i>
-      Gestisci
+      <span>Gestisci</span>
     </a>
   </nav>
 </header>
