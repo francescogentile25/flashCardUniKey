@@ -1,13 +1,11 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, OnDestroy, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
-import {
-  Flashcard,
-  FlashcardMastery,
-  SwipeOutcome,
-  UpdateFlashcardReviewRequest
-} from '../models/flashcard.model';
+import { Flashcard, FlashcardMastery, SwipeOutcome } from '../models/flashcard.model';
 import { FlashcardsService } from '../services/flashcards.service';
+import { ReviewSyncService } from '../services/review-sync.service';
+import { isSpeechSupported, speak, stopSpeaking } from '../utils/speech.util';
+import { formatInterval } from '../utils/spaced-repetition.util';
 
 type StudyMode = 'today' | 'review' | 'simulation';
 
@@ -21,6 +19,8 @@ type ModeConfig = {
 const SWIPE_THRESHOLD = 64;
 const SWIPE_CLAMP = 140;
 const EXIT_ANIMATION_MS = 300;
+
+export const ALL_SUBJECTS = '__all__';
 
 const delay = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
@@ -48,11 +48,14 @@ const MODE_CONFIGS: ModeConfig[] = [
   templateUrl: './flashcards-home.html',
   styleUrl: './flashcards-home.scss'
 })
-export class FlashcardsHome {
+export class FlashcardsHome implements OnDestroy {
   private readonly flashcardsService = inject(FlashcardsService);
+  private readonly reviewSync = inject(ReviewSyncService);
 
   protected readonly modes = MODE_CONFIGS;
+  protected readonly allSubjects = ALL_SUBJECTS;
   protected readonly activeMode = signal<StudyMode>('today');
+  protected readonly activeSubject = signal<string>(ALL_SUBJECTS);
   protected readonly cards = signal<Flashcard[]>([]);
   protected readonly queue = signal<Flashcard[]>([]);
   protected readonly knownCount = signal(0);
@@ -65,7 +68,53 @@ export class FlashcardsHome {
   protected readonly isDragging = signal(false);
   protected readonly exiting = signal<SwipeOutcome | null>(null);
   protected readonly dealing = signal(false);
+  protected readonly speaking = signal(false);
+  protected readonly speechAvailable = isSpeechSupported();
+  protected readonly pendingReviews = this.reviewSync.pendingCount;
   private readonly dragStartX = signal(0);
+
+  /** Materie presenti nel deck, in ordine alfabetico. */
+  protected readonly subjects = computed(() =>
+    [...new Set(this.cards().map((card) => card.subject))].sort((a, b) => a.localeCompare(b))
+  );
+
+  /** Card della materia selezionata (o tutte). */
+  protected readonly scopedCards = computed(() => {
+    const subject = this.activeSubject();
+    const cards = this.cards();
+    return subject === ALL_SUBJECTS ? cards : cards.filter((card) => card.subject === subject);
+  });
+
+  protected readonly currentCard = computed(() => this.queue()[0] ?? null);
+  protected readonly remainingCount = computed(() => this.queue().length);
+  protected readonly weakCount = computed(
+    () => this.scopedCards().filter((card) => this.isWeak(card)).length
+  );
+  protected readonly todayCount = computed(
+    () =>
+      this.scopedCards().filter((card) => this.isDueToday(card) || card.mastery_level === 'new')
+        .length
+  );
+  protected readonly masteredCount = computed(
+    () => this.scopedCards().filter((card) => card.mastery_level === 'mastered').length
+  );
+  protected readonly empty = computed(() => !this.loading() && this.scopedCards().length === 0);
+  protected readonly activeModeConfig = computed(
+    () => this.modes.find((mode) => mode.id === this.activeMode()) ?? this.modes[0]
+  );
+  protected readonly progress = computed(() => {
+    const total = this.knownCount() + this.unknownCount() + this.remainingCount();
+    if (total === 0) {
+      return 0;
+    }
+
+    return Math.round(((this.knownCount() + this.unknownCount()) / total) * 100);
+  });
+
+  /** Il porcellino resta dentro la barra anche a 0% e 100%. */
+  protected readonly pigPosition = computed(
+    () => `clamp(0.7rem, ${this.progress()}%, calc(100% - 0.7rem))`
+  );
 
   /** Quanto manca alla conferma dello swipe: 0 = fermo, 1 = soglia raggiunta. */
   protected readonly dragProgress = computed(() =>
@@ -101,45 +150,19 @@ export class FlashcardsHome {
     return `translateX(${offset}px) rotate(${offset / 22}deg)`;
   });
 
+  constructor() {
+    void this.loadCards();
+  }
+
+  ngOnDestroy(): void {
+    stopSpeaking();
+  }
+
   protected stampOpacity(outcome: SwipeOutcome): number {
     if (this.exiting() === outcome) {
       return 1;
     }
     return this.dragOutcome() === outcome ? this.dragProgress() : 0;
-  }
-
-  protected readonly currentCard = computed(() => this.queue()[0] ?? null);
-  protected readonly remainingCount = computed(() => this.queue().length);
-  protected readonly totalCount = computed(() => this.cards().length);
-  protected readonly weakCount = computed(() =>
-    this.cards().filter((card) => this.isWeak(card)).length
-  );
-  protected readonly todayCount = computed(() =>
-    this.cards().filter((card) => this.isDueToday(card) || card.mastery_level === 'new').length
-  );
-  protected readonly masteredCount = computed(() =>
-    this.cards().filter((card) => card.mastery_level === 'mastered').length
-  );
-  protected readonly empty = computed(() => !this.loading() && this.cards().length === 0);
-  protected readonly activeModeConfig = computed(
-    () => this.modes.find((mode) => mode.id === this.activeMode()) ?? this.modes[0]
-  );
-  protected readonly progress = computed(() => {
-    const total = this.knownCount() + this.unknownCount() + this.remainingCount();
-    if (total === 0) {
-      return 0;
-    }
-
-    return Math.round(((this.knownCount() + this.unknownCount()) / total) * 100);
-  });
-
-  /** Il porcellino resta dentro la barra anche a 0% e 100%. */
-  protected readonly pigPosition = computed(
-    () => `clamp(0.7rem, ${this.progress()}%, calc(100% - 0.7rem))`
-  );
-
-  constructor() {
-    void this.loadCards();
   }
 
   protected async loadCards(): Promise<void> {
@@ -148,7 +171,10 @@ export class FlashcardsHome {
 
     try {
       const cards = await firstValueFrom(this.flashcardsService.getAll());
-      this.cards.set(this.normalizeCards(cards));
+      this.cards.set(cards);
+      if (!this.subjects().includes(this.activeSubject())) {
+        this.activeSubject.set(ALL_SUBJECTS);
+      }
       this.resetSession();
       this.rebuildQueue();
     } catch {
@@ -168,6 +194,16 @@ export class FlashcardsHome {
     this.rebuildQueue();
   }
 
+  protected setSubject(subject: string): void {
+    if (this.activeSubject() === subject) {
+      return;
+    }
+
+    this.activeSubject.set(subject);
+    this.resetSession();
+    this.rebuildQueue();
+  }
+
   protected flipCard(event?: Event): void {
     event?.stopPropagation();
     if (!this.currentCard()) {
@@ -175,6 +211,29 @@ export class FlashcardsHome {
     }
 
     this.isAnswerVisible.update((value) => !value);
+  }
+
+  /** Legge la faccia attualmente visibile: ripasso a mani libere. */
+  protected toggleSpeech(event: Event): void {
+    event.stopPropagation();
+    const card = this.currentCard();
+    if (!card) {
+      return;
+    }
+
+    if (this.speaking()) {
+      stopSpeaking();
+      this.speaking.set(false);
+      return;
+    }
+
+    const text = this.isAnswerVisible() ? card.answer : card.question;
+    this.speaking.set(true);
+    speak(text, () => this.speaking.set(false));
+  }
+
+  protected intervalLabel(card: Flashcard): string {
+    return formatInterval(card.interval_days);
   }
 
   protected markKnown(): void {
@@ -226,24 +285,6 @@ export class FlashcardsHome {
     this.dragOffset.set(0);
   }
 
-  /** Conferma l'esito: card che vola via + vibrazione, poi avanza la coda. */
-  private async commitSwipe(outcome: SwipeOutcome): Promise<void> {
-    if (this.exiting() || this.savingReview() || !this.currentCard()) {
-      return;
-    }
-
-    this.exiting.set(outcome);
-    this.isAnswerVisible.set(false);
-    navigator.vibrate?.(35);
-    await delay(EXIT_ANIMATION_MS);
-    await this.handleSwipe(outcome);
-    this.exiting.set(null);
-    this.dragOffset.set(0);
-
-    this.dealing.set(true);
-    setTimeout(() => this.dealing.set(false), 260);
-  }
-
   protected masteryLabel(card: Flashcard): string {
     const labels: Record<FlashcardMastery, string> = {
       new: 'Nuova',
@@ -263,6 +304,26 @@ export class FlashcardsHome {
     return card.unknown_count * 3 - card.known_count + daysSinceSeen + dueBoost;
   }
 
+  /** Conferma l'esito: card che vola via + vibrazione, poi avanza la coda. */
+  private async commitSwipe(outcome: SwipeOutcome): Promise<void> {
+    if (this.exiting() || this.savingReview() || !this.currentCard()) {
+      return;
+    }
+
+    stopSpeaking();
+    this.speaking.set(false);
+    this.exiting.set(outcome);
+    this.isAnswerVisible.set(false);
+    navigator.vibrate?.(35);
+    await delay(EXIT_ANIMATION_MS);
+    await this.handleSwipe(outcome);
+    this.exiting.set(null);
+    this.dragOffset.set(0);
+
+    this.dealing.set(true);
+    setTimeout(() => this.dealing.set(false), 260);
+  }
+
   private async handleSwipe(outcome: SwipeOutcome): Promise<void> {
     const [current, ...rest] = this.queue();
     if (!current || this.savingReview()) {
@@ -273,28 +334,25 @@ export class FlashcardsHome {
     this.error.set(undefined);
     this.isAnswerVisible.set(false);
 
-    const reviewed = this.buildReviewedCard(current, outcome);
-    this.updateCardLocally(reviewed);
-
-    if (outcome === 'known') {
-      this.knownCount.update((value) => value + 1);
-      this.queue.set(rest);
-    } else {
-      this.unknownCount.update((value) => value + 1);
-      this.queue.set(this.insertForAggressiveReview(rest, reviewed));
-    }
-
     try {
-      await firstValueFrom(this.flashcardsService.updateReview(reviewed.id, this.toReviewRequest(reviewed)));
-    } catch {
-      this.error.set('Ho aggiornato la sessione in locale, ma Supabase non ha salvato il ripasso.');
+      const next = await this.reviewSync.submit(current, outcome, 'deck');
+      const reviewed: Flashcard = { ...current, ...next };
+      this.updateCardLocally(reviewed);
+
+      if (outcome === 'known') {
+        this.knownCount.update((value) => value + 1);
+        this.queue.set(rest);
+      } else {
+        this.unknownCount.update((value) => value + 1);
+        this.queue.set(this.insertForAggressiveReview(rest, reviewed));
+      }
     } finally {
       this.savingReview.set(false);
     }
   }
 
   private rebuildQueue(): void {
-    const cards = this.cards();
+    const cards = this.scopedCards();
     const todayCards = cards.filter((card) => this.isDueToday(card) || card.mastery_level === 'new');
     const queueByMode: Record<StudyMode, Flashcard[]> = {
       today: this.sortByPriority(todayCards.length > 0 ? todayCards : cards),
@@ -307,93 +365,19 @@ export class FlashcardsHome {
   }
 
   private resetSession(): void {
+    stopSpeaking();
+    this.speaking.set(false);
     this.knownCount.set(0);
     this.unknownCount.set(0);
     this.isAnswerVisible.set(false);
     this.dragOffset.set(0);
   }
 
-  private normalizeCards(cards: Flashcard[]): Flashcard[] {
-    return cards.map((card) => ({
-      ...card,
-      known_count: card.known_count ?? 0,
-      unknown_count: card.unknown_count ?? 0,
-      last_seen_at: card.last_seen_at ?? null,
-      next_review_at: card.next_review_at ?? new Date().toISOString(),
-      mastery_level: card.mastery_level ?? 'new'
-    }));
-  }
-
-  private buildReviewedCard(card: Flashcard, outcome: SwipeOutcome): Flashcard {
-    const now = new Date();
-    const knownCount = card.known_count + (outcome === 'known' ? 1 : 0);
-    const unknownCount = card.unknown_count + (outcome === 'unknown' ? 1 : 0);
-    const masteryLevel = this.resolveMastery(knownCount, unknownCount, outcome);
-    const nextReviewAt = this.resolveNextReviewAt(now, knownCount, unknownCount, outcome);
-
-    return {
-      ...card,
-      known_count: knownCount,
-      unknown_count: unknownCount,
-      last_seen_at: now.toISOString(),
-      next_review_at: nextReviewAt.toISOString(),
-      mastery_level: masteryLevel
-    };
-  }
-
-  private resolveMastery(
-    knownCount: number,
-    unknownCount: number,
-    outcome: SwipeOutcome
-  ): FlashcardMastery {
-    if (outcome === 'unknown') {
-      return unknownCount >= 2 ? 'weak' : 'review';
-    }
-
-    if (unknownCount === 0 && knownCount >= 2) {
-      return 'mastered';
-    }
-
-    if (knownCount >= unknownCount + 2) {
-      return 'almost';
-    }
-
-    return 'review';
-  }
-
-  private resolveNextReviewAt(
-    now: Date,
-    knownCount: number,
-    unknownCount: number,
-    outcome: SwipeOutcome
-  ): Date {
-    const next = new Date(now);
-
-    if (outcome === 'unknown') {
-      next.setMinutes(next.getMinutes() + (unknownCount >= 3 ? 5 : 20));
-      return next;
-    }
-
-    const days = unknownCount === 0 && knownCount >= 2 ? 3 : 1;
-    next.setDate(next.getDate() + days);
-    return next;
-  }
-
   private insertForAggressiveReview(rest: Flashcard[], reviewed: Flashcard): Flashcard[] {
-    const delay = reviewed.unknown_count >= 3 ? 1 : reviewed.unknown_count === 2 ? 2 : 3;
-    const index = Math.min(delay, rest.length);
+    const delaySlots = reviewed.unknown_count >= 3 ? 1 : reviewed.unknown_count === 2 ? 2 : 3;
+    const index = Math.min(delaySlots, rest.length);
 
     return [...rest.slice(0, index), reviewed, ...rest.slice(index)];
-  }
-
-  private toReviewRequest(card: Flashcard): UpdateFlashcardReviewRequest {
-    return {
-      known_count: card.known_count,
-      unknown_count: card.unknown_count,
-      last_seen_at: card.last_seen_at ?? new Date().toISOString(),
-      next_review_at: card.next_review_at ?? new Date().toISOString(),
-      mastery_level: card.mastery_level
-    };
   }
 
   private updateCardLocally(card: Flashcard): void {

@@ -1,13 +1,15 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
-import { CreateFlashcardRequest } from '../models/flashcard.model';
+import { CreateFlashcardRequest, DEFAULT_SUBJECT } from '../models/flashcard.model';
 import { FlashcardsService, GeneratedCard } from '../services/flashcards.service';
 import { allocateCounts, chunkText } from '../utils/chunk-text.util';
 import { extractPdfText } from '../utils/pdf-text.util';
 
 const RATE_LIMIT_BACKOFF_MS = 25_000;
 const MAX_ATTEMPTS_PER_CHUNK = 3;
+/** Contesto salvato con ogni card per poter tornare al testo di partenza. */
+const EXCERPT_CHARS = 600;
 
 const delay = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
@@ -23,6 +25,7 @@ export class FlashcardImport {
   private readonly flashcardsService = inject(FlashcardsService);
 
   protected readonly fileName = signal<string | undefined>(undefined);
+  protected readonly subject = signal(DEFAULT_SUBJECT);
   protected readonly sourceText = signal('');
   protected readonly count = signal(12);
   protected readonly drafts = signal<DraftCard[]>([]);
@@ -59,6 +62,7 @@ export class FlashcardImport {
 
     this.reset();
     this.fileName.set(file.name);
+    this.subject.set(subjectFromFileName(file.name));
     this.extracting.set(true);
 
     try {
@@ -78,6 +82,10 @@ export class FlashcardImport {
 
   protected onTextInput(event: Event): void {
     this.sourceText.set((event.target as HTMLTextAreaElement).value);
+  }
+
+  protected onSubjectInput(event: Event): void {
+    this.subject.set((event.target as HTMLInputElement).value);
   }
 
   protected onCountInput(event: Event): void {
@@ -107,14 +115,14 @@ export class FlashcardImport {
 
     this.progress.set({ done: 0, total: jobs.length });
 
-    const collected: GeneratedCard[] = [];
+    const collected: DraftCard[] = [];
     let failedChunks = 0;
 
     try {
       for (const job of jobs) {
         const cards = await this.generateChunk(job.chunk, job.count);
         if (cards) {
-          collected.push(...cards);
+          collected.push(...cards.map((card) => this.toDraft(card, job.chunk)));
         } else {
           failedChunks++;
           if (collected.length === 0 && failedChunks >= 2) {
@@ -132,7 +140,7 @@ export class FlashcardImport {
         return;
       }
 
-      this.drafts.set(unique.map((card) => ({ ...card, include: true })));
+      this.drafts.set(unique);
       if (failedChunks > 0) {
         this.error.set(
           `${failedChunks} blocchi su ${jobs.length} non generati (probabile rate limit). Prodotte ${unique.length} card.`
@@ -163,7 +171,19 @@ export class FlashcardImport {
     return undefined;
   }
 
-  private dedupeCards(cards: GeneratedCard[]): GeneratedCard[] {
+  /** Ogni card ricorda da quale PDF e da quale porzione di testo e nata. */
+  private toDraft(card: GeneratedCard, chunk: string): DraftCard {
+    return {
+      question: card.question,
+      answer: card.answer,
+      subject: this.subject().trim() || DEFAULT_SUBJECT,
+      source_file: this.fileName() ?? null,
+      source_excerpt: chunk.slice(0, EXCERPT_CHARS).trim(),
+      include: true
+    };
+  }
+
+  private dedupeCards(cards: DraftCard[]): DraftCard[] {
     const seen = new Set<string>();
     return cards.filter((card) => {
       const key = card.question.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
@@ -193,11 +213,15 @@ export class FlashcardImport {
   }
 
   protected async save(): Promise<void> {
+    const subject = this.subject().trim() || DEFAULT_SUBJECT;
     const selected = this.drafts()
       .filter((card) => card.include && card.question.trim() && card.answer.trim())
       .map<CreateFlashcardRequest>((card) => ({
         question: card.question.trim(),
-        answer: card.answer.trim()
+        answer: card.answer.trim(),
+        subject,
+        source_file: card.source_file,
+        source_excerpt: card.source_excerpt
       }));
 
     if (selected.length === 0) {
@@ -211,7 +235,7 @@ export class FlashcardImport {
 
     try {
       const created = await firstValueFrom(this.flashcardsService.createMany(selected));
-      this.savedMessage.set(`Salvate ${created.length} card nel deck.`);
+      this.savedMessage.set(`Salvate ${created.length} card in ${subject}.`);
       this.drafts.set([]);
     } catch {
       this.error.set('Salvataggio non riuscito. Controlla la policy INSERT su Supabase.');
@@ -226,4 +250,20 @@ export class FlashcardImport {
     this.drafts.set([]);
     this.sourceText.set('');
   }
+}
+
+/**
+ * Propone la materia dal nome del file: toglie estensione, sigle iniziali
+ * ("a1.5") e tutto cio che segue un trattino di attribuzione.
+ */
+export function subjectFromFileName(fileName: string): string {
+  const withoutExtension = fileName.replace(/\.pdf$/i, '');
+  const beforeAttribution = withoutExtension.split(/\s+-\s+/)[0];
+  const withoutCode = beforeAttribution.replace(/^[a-z]?\d+(\.\d+)*\s+/i, '');
+  const cleaned = withoutCode.replace(/\s+/g, ' ').trim();
+
+  if (cleaned.length < 2) {
+    return DEFAULT_SUBJECT;
+  }
+  return cleaned.length > 60 ? `${cleaned.slice(0, 57).trim()}...` : cleaned;
 }

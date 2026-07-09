@@ -104,7 +104,9 @@ label span,
   font-weight: 800;
 }
 
-textarea {
+textarea,
+input[type='text'],
+input[type='search'] {
   background: #ffffff;
   border: 1px solid var(--linea);
   border-radius: 12px;
@@ -115,9 +117,107 @@ textarea {
   width: 100%;
 }
 
-textarea:focus {
+textarea:focus,
+input[type='text']:focus,
+input[type='search']:focus {
   border-color: var(--rosa);
   outline: 3px solid var(--rosa-tenue);
+}
+
+.search-field {
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid var(--linea);
+  border-radius: 12px;
+  display: flex;
+  gap: 0.55rem;
+  padding-left: 0.85rem;
+}
+
+.search-field i {
+  color: var(--grugno-tenue);
+}
+
+.search-field input {
+  border: 0;
+  padding-left: 0;
+}
+
+.search-field input:focus {
+  outline: none;
+}
+
+.subject-bar {
+  display: flex;
+  gap: 0.45rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.subject-bar::-webkit-scrollbar {
+  display: none;
+}
+
+.subject-bar button {
+  background: var(--carta);
+  border: 1px solid var(--linea);
+  border-radius: 999px;
+  color: var(--grugno-tenue);
+  flex: 0 0 auto;
+  font-size: 0.8rem;
+  font-weight: 800;
+  min-height: 38px;
+  padding: 0.35rem 0.85rem;
+}
+
+.subject-bar button.active {
+  background: var(--rosa);
+  border-color: var(--rosa);
+  color: var(--grugno);
+}
+
+.result-count {
+  color: var(--grugno-tenue);
+  font-family: var(--font-data);
+  font-size: 0.75rem;
+  margin: 0;
+}
+
+.source {
+  border-top: 1px solid var(--linea);
+  margin-top: 0.7rem;
+  padding-top: 0.6rem;
+}
+
+.source summary {
+  align-items: center;
+  color: var(--grugno-tenue);
+  cursor: pointer;
+  display: flex;
+  font-size: 0.78rem;
+  font-weight: 700;
+  gap: 0.4rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.source blockquote {
+  background: var(--cotenna);
+  border-radius: 10px;
+  color: var(--grugno);
+  font-size: 0.82rem;
+  line-height: 1.5;
+  margin: 0.6rem 0 0;
+  max-height: 190px;
+  overflow-y: auto;
+  padding: 0.7rem;
+}
+
+.source-empty {
+  color: var(--grugno-tenue);
+  font-size: 0.8rem;
+  margin: 0.5rem 0 0;
 }
 
 small,

@@ -86,6 +86,44 @@
   padding: 0.85rem;
 }
 
+.notice.offline {
+  background: var(--carta);
+  color: var(--grugno-tenue);
+}
+
+/* Materie: una riga scorrevole, non manda la card sotto il fold. */
+.subject-bar {
+  display: flex;
+  gap: 0.45rem;
+  overflow-x: auto;
+  padding-bottom: 0.15rem;
+  scrollbar-width: none;
+}
+
+.subject-bar::-webkit-scrollbar {
+  display: none;
+}
+
+.subject-bar button {
+  background: var(--carta);
+  border: 1px solid var(--linea);
+  border-radius: 999px;
+  color: var(--grugno-tenue);
+  cursor: pointer;
+  flex: 0 0 auto;
+  font-size: 0.8rem;
+  font-weight: 800;
+  min-height: 38px;
+  padding: 0.35rem 0.85rem;
+  transition: background 140ms ease, color 140ms ease;
+}
+
+.subject-bar button.active {
+  background: var(--rosa);
+  border-color: var(--rosa);
+  color: var(--grugno);
+}
+
 .mode-tabs {
   display: grid;
   gap: 0.55rem;
@@ -437,6 +475,24 @@
 .ghost-button {
   background: var(--cotenna);
   color: var(--grugno);
+  flex: 1;
+}
+
+.face-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.icon-ghost {
+  background: var(--cotenna);
+  border: 0;
+  border-radius: 14px;
+  color: var(--grugno);
+  cursor: pointer;
+  flex: 0 0 auto;
+  font-size: 1.05rem;
+  min-height: 48px;
+  width: 52px;
 }
 
 .swipe-hint {

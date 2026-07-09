@@ -28,6 +28,11 @@
     }
 
     <label class="field">
+      <span>Materia — proposta dal nome del file, modificabile</span>
+      <input type="text" [value]="subject()" (input)="onSubjectInput($event)" />
+    </label>
+
+    <label class="field">
       <span>Testo sorgente ({{ charCount() }} caratteri) — puoi modificarlo</span>
       <textarea
         rows="8"

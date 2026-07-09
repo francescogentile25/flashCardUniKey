@@ -3,10 +3,12 @@ import { form, FormField, required, submit } from '@angular/forms/signals';
 import { RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { FormState } from '../../../core/utils/simple-form-model.util';
-import { CreateFlashcardRequest, Flashcard } from '../models/flashcard.model';
+import { DEFAULT_SUBJECT, Flashcard, UpdateFlashcardRequest } from '../models/flashcard.model';
 import { FlashcardsService } from '../services/flashcards.service';
 
-type CardForm = CreateFlashcardRequest;
+type CardForm = UpdateFlashcardRequest;
+
+const ALL_SUBJECTS = '__all__';
 
 @Component({
   selector: 'app-flashcard-create',
@@ -17,6 +19,7 @@ type CardForm = CreateFlashcardRequest;
 export class FlashcardCreate {
   private readonly flashcardsService = inject(FlashcardsService);
 
+  protected readonly allSubjects = ALL_SUBJECTS;
   protected readonly cards = signal<Flashcard[]>([]);
   protected readonly loading = signal(false);
   protected readonly saving = signal(false);
@@ -26,14 +29,39 @@ export class FlashcardCreate {
   protected readonly error = signal<string | undefined>(undefined);
   protected readonly isEditing = computed(() => this.editingId() !== null);
 
+  protected readonly search = signal('');
+  protected readonly subjectFilter = signal<string>(ALL_SUBJECTS);
+
+  protected readonly subjects = computed(() =>
+    [...new Set(this.cards().map((card) => card.subject))].sort((a, b) => a.localeCompare(b))
+  );
+
+  /** Filtro per materia + ricerca testuale su domanda, risposta e fonte. */
+  protected readonly visibleCards = computed(() => {
+    const subject = this.subjectFilter();
+    const needle = this.search().trim().toLowerCase();
+
+    return this.cards()
+      .filter((card) => subject === ALL_SUBJECTS || card.subject === subject)
+      .filter((card) => {
+        if (!needle) {
+          return true;
+        }
+        const haystack = `${card.question} ${card.answer} ${card.source_file ?? ''}`.toLowerCase();
+        return haystack.includes(needle);
+      });
+  });
+
   protected readonly state = signal<FormState<CardForm>>({
     question: '',
-    answer: ''
+    answer: '',
+    subject: DEFAULT_SUBJECT
   });
 
   protected readonly cardForm = form(this.state, (p) => {
     required(p.question, { message: 'Inserisci la domanda' });
     required(p.answer, { message: 'Inserisci la risposta' });
+    required(p.subject, { message: 'Inserisci la materia' });
   });
 
   constructor() {
@@ -46,11 +74,22 @@ export class FlashcardCreate {
 
     try {
       this.cards.set(await firstValueFrom(this.flashcardsService.getAll()));
+      if (!this.subjects().includes(this.subjectFilter())) {
+        this.subjectFilter.set(ALL_SUBJECTS);
+      }
     } catch {
       this.error.set('Non riesco a caricare le card. Controlla Supabase e le policy SELECT.');
     } finally {
       this.loading.set(false);
     }
+  }
+
+  protected onSearchInput(event: Event): void {
+    this.search.set((event.target as HTMLInputElement).value);
+  }
+
+  protected setSubjectFilter(subject: string): void {
+    this.subjectFilter.set(subject);
   }
 
   protected editCard(card: Flashcard): void {
@@ -59,13 +98,14 @@ export class FlashcardCreate {
     this.error.set(undefined);
     this.state.set({
       question: card.question,
-      answer: card.answer
+      answer: card.answer,
+      subject: card.subject
     });
   }
 
   protected resetForm(): void {
     this.editingId.set(null);
-    this.state.set({ question: '', answer: '' });
+    this.state.set({ question: '', answer: '', subject: DEFAULT_SUBJECT });
   }
 
   protected async deleteCard(card: Flashcard): Promise<void> {
@@ -121,7 +161,8 @@ export class FlashcardCreate {
           this.cards.update((cards) => [...cards, created]);
         }
 
-        this.state.set({ question: '', answer: '' });
+        const subject = this.state().subject;
+        this.state.set({ question: '', answer: '', subject });
         this.savedMessage.set('Card salvata.');
       } catch {
         this.error.set('Salvataggio non riuscito. Controlla le policy INSERT/UPDATE su Supabase.');

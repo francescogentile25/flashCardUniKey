@@ -12,8 +12,8 @@
         stroke-linecap="round"
         stroke-linejoin="round" />
     </svg>
+    <!-- Quiz, Progressi e Gestisci vivono nella barra di navigazione. -->
     <nav class="hero-actions">
-      <a routerLink="/new"><i class="pi pi-plus" aria-hidden="true"></i> Nuova card</a>
       <a routerLink="/import"><i class="pi pi-file-import" aria-hidden="true"></i> Genera da PDF</a>
     </nav>
   </header>
@@ -23,6 +23,32 @@
       <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>
       <span>{{ error() }}</span>
     </div>
+  }
+
+  @if (pendingReviews() > 0) {
+    <div class="notice offline" role="status">
+      <i class="pi pi-cloud-upload" aria-hidden="true"></i>
+      <span>{{ pendingReviews() }} ripassi salvati sul telefono. Li sincronizzo appena torna la rete.</span>
+    </div>
+  }
+
+  @if (subjects().length > 1) {
+    <section class="subject-bar" aria-label="Materia">
+      <button
+        type="button"
+        [class.active]="activeSubject() === allSubjects"
+        (click)="setSubject(allSubjects)">
+        Tutte
+      </button>
+      @for (subject of subjects(); track subject) {
+        <button
+          type="button"
+          [class.active]="activeSubject() === subject"
+          (click)="setSubject(subject)">
+          {{ subject }}
+        </button>
+      }
+    </section>
   }
 
   <section class="mode-tabs" aria-label="Modalita studio">
@@ -86,18 +112,31 @@
         <div class="card-ears" aria-hidden="true"></div>
         <div class="face front">
           <div class="chips">
+            <span>{{ card.subject }}</span>
             <span>{{ masteryLabel(card) }}</span>
-            <span>Priorita {{ cardPriority(card) }}</span>
+            <span>{{ intervalLabel(card) }}</span>
           </div>
           <h2>{{ card.question }}</h2>
-          <button
-            class="ghost-button"
-            type="button"
-            (pointerdown)="$event.stopPropagation()"
-            (click)="flipCard($event)">
-            <i class="pi pi-eye" aria-hidden="true"></i>
-            Mostra risposta
-          </button>
+          <div class="face-actions">
+            <button
+              class="ghost-button"
+              type="button"
+              (pointerdown)="$event.stopPropagation()"
+              (click)="flipCard($event)">
+              <i class="pi pi-eye" aria-hidden="true"></i>
+              Mostra risposta
+            </button>
+            @if (speechAvailable) {
+              <button
+                class="icon-ghost"
+                type="button"
+                [attr.aria-label]="speaking() ? 'Ferma la lettura' : 'Leggi la domanda'"
+                (pointerdown)="$event.stopPropagation()"
+                (click)="toggleSpeech($event)">
+                <i class="pi" [class.pi-volume-up]="!speaking()" [class.pi-stop-circle]="speaking()" aria-hidden="true"></i>
+              </button>
+            }
+          </div>
         </div>
 
         <div class="face back">
@@ -113,14 +152,26 @@
             <circle cx="13.5" cy="20" r="3" fill="currentColor" />
             <circle cx="26.5" cy="20" r="3" fill="currentColor" />
           </svg>
-          <button
-            class="ghost-button"
-            type="button"
-            (pointerdown)="$event.stopPropagation()"
-            (click)="flipCard($event)">
-            <i class="pi pi-undo" aria-hidden="true"></i>
-            Torna alla domanda
-          </button>
+          <div class="face-actions">
+            <button
+              class="ghost-button"
+              type="button"
+              (pointerdown)="$event.stopPropagation()"
+              (click)="flipCard($event)">
+              <i class="pi pi-undo" aria-hidden="true"></i>
+              Torna alla domanda
+            </button>
+            @if (speechAvailable) {
+              <button
+                class="icon-ghost"
+                type="button"
+                [attr.aria-label]="speaking() ? 'Ferma la lettura' : 'Leggi la risposta'"
+                (pointerdown)="$event.stopPropagation()"
+                (click)="toggleSpeech($event)">
+                <i class="pi" [class.pi-volume-up]="!speaking()" [class.pi-stop-circle]="speaking()" aria-hidden="true"></i>
+              </button>
+            }
+          </div>
         </div>
 
         <!-- Timbri da cartella clinica: feedback dello swipe -->

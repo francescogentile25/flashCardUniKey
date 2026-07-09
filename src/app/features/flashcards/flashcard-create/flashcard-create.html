@@ -30,6 +30,23 @@
     </div>
 
     <label>
+      <span>Materia</span>
+      <input type="text" list="subject-options" [formField]="cardForm.subject" />
+      <datalist id="subject-options">
+        @for (subject of subjects(); track subject) {
+          <option [value]="subject"></option>
+        }
+      </datalist>
+      @if (cardForm.subject().touched() && !cardForm.subject().valid()) {
+        <small>
+          @for (err of cardForm.subject().errors(); track err) {
+            {{ err.message }}
+          }
+        </small>
+      }
+    </label>
+
+    <label>
       <span>Domanda</span>
       <textarea rows="5" [formField]="cardForm.question"></textarea>
       @if (cardForm.question().touched() && !cardForm.question().valid()) {
@@ -72,17 +89,65 @@
       </button>
     </div>
 
+    <label class="search-field">
+      <i class="pi pi-search" aria-hidden="true"></i>
+      <input
+        type="search"
+        placeholder="Cerca in domande, risposte e fonti"
+        [value]="search()"
+        (input)="onSearchInput($event)" />
+    </label>
+
+    @if (subjects().length > 1) {
+      <div class="subject-bar" role="group" aria-label="Filtra per materia">
+        <button
+          type="button"
+          [class.active]="subjectFilter() === allSubjects"
+          (click)="setSubjectFilter(allSubjects)">
+          Tutte
+        </button>
+        @for (subject of subjects(); track subject) {
+          <button
+            type="button"
+            [class.active]="subjectFilter() === subject"
+            (click)="setSubjectFilter(subject)">
+            {{ subject }}
+          </button>
+        }
+      </div>
+    }
+
     @if (loading()) {
       <div class="library-state">Caricamento card...</div>
     } @else if (cards().length === 0) {
       <div class="library-state">Ancora nessuna flash card.</div>
+    } @else if (visibleCards().length === 0) {
+      <div class="library-state">Nessuna card per questa ricerca.</div>
     } @else {
+      <p class="result-count">{{ visibleCards().length }} di {{ cards().length }} card</p>
       <div class="card-list">
-        @for (card of cards(); track card.id) {
+        @for (card of visibleCards(); track card.id) {
           <article class="library-card" [class.editing]="editingId() === card.id">
             <div>
+              <div class="chips">
+                <span>{{ card.subject }}</span>
+              </div>
               <h2>{{ card.question }}</h2>
               <p>{{ card.answer }}</p>
+
+              @if (card.source_file) {
+                <details class="source">
+                  <summary>
+                    <i class="pi pi-file-pdf" aria-hidden="true"></i>
+                    {{ card.source_file }}
+                  </summary>
+                  @if (card.source_excerpt) {
+                    <blockquote>{{ card.source_excerpt }}</blockquote>
+                  } @else {
+                    <p class="source-empty">Nessun estratto salvato per questa card.</p>
+                  }
+                </details>
+              }
             </div>
 
             <div class="row-actions">
